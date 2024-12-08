@@ -5,9 +5,13 @@ import { FormItem } from "@/components/ui/Form";
 import { Field, FormikErrors, FormikTouched, useFormikContext } from "formik";
 
 type FormFieldsName = {
-  bigBlind: number;
-  smallBlind: number;
-  buyInRange: [number, number];
+  date: string;
+  weight: string;
+  quality: string;
+  quantity: number;
+  receivedFrom: string;
+  billNo: string;
+  danaReceiverName: string;
 };
 
 type BasicInformationFieldsProps = {
@@ -20,88 +24,124 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
   const { touched, errors } = props;
   const { values, setFieldValue, handleChange } = useFormikContext<FormFieldsName>();
 
-  useEffect(() => {
-    let bigBlind = Math.ceil((values.buyInRange[1] / 100));
-    setFieldValue("bigBlind", bigBlind  );
-    setFieldValue("smallBlind", Math.ceil(bigBlind / 2));
-  }, [values.buyInRange, setFieldValue]);
-
-  const handleBigBlindChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleChange(e);
-    setFieldValue("bigBlind", Number(e.target.value));
-  };
-
-  const handleBuyInRangeChange =
-    (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newValue = [...values.buyInRange];
-      newValue[index] = Number(e.target.value);
-      setFieldValue("buyInRange", newValue);
-    };
-
+  
+  
+  
   return (
     <AdaptableCard divider className="mb-4">
       <h5>Basic Information</h5>
       <p className="mb-6">Section to config basic product information</p>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+      <div className="col-span-1">
       <FormItem
-        label="Small Blind"
-        invalid={(errors.smallBlind && touched.smallBlind) as boolean}
-        errorMessage={errors.smallBlind}
+        label="Date"
+        invalid={(errors.date && touched.date) as boolean}
+        //errorMessage={errors.Date}
       >
         <Field
-          readOnly
-          type="number"
+          type="date"
           autoComplete="off"
-          name="smallBlind"
+          name="date"
           placeholder="Small Blind"
           component={Input}
         />
       </FormItem>
-
+      </div>
+      
+      <div className="col-span-1">
       <FormItem
-        label="Big Blind"
-        invalid={(errors.bigBlind && touched.bigBlind) as boolean}
-        errorMessage={errors.bigBlind}
+         label="Quality"
+         invalid={(errors.quality&& touched.quality) as boolean}
+         errorMessage={errors.quality}
+       >
+         <Field
+           type="string"
+           autoComplete="off"
+           name="quality"
+           placeholder="Enter Quality"
+           component={Input}
+         />
+      </FormItem>
+      </div>
+      
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="col-span-1">
+      <FormItem
+        label="Weight"
+        invalid={(errors.weight && touched.weight) as boolean}
+        errorMessage={errors.weight}
       >
         <Field
-        readOnly
-          type="number"
+          type="string"
           autoComplete="off"
-          name="bigBlind"
-          placeholder="Big Blind"
+          name="weight"
+          placeholder="Enter Weight"
           component={Input}
-          onChange={handleBigBlindChange}
         />
       </FormItem>
-
+      </div>
+      <div className="col-span-1">
       <FormItem
-        label="Buy In Range (Min)"
-        invalid={(errors.buyInRange && touched.buyInRange) as boolean}
-      >
-        <Field
-          type="number"
-          autoComplete="off"
-          name="buyInRange[0]"
-          placeholder="Min Buy In Range"
-          component={Input}
-          onChange={handleBuyInRangeChange(0)}
-          value={values.buyInRange[0]}
-        />
+       label="Quantity"
+       invalid={(errors.quantity&& touched.quantity) as boolean}
+       errorMessage={errors.quantity}
+     >
+       <Field
+         type="number"
+         autoComplete="off"
+         name="quantity"
+         placeholder="Enter Quantity"
+         component={Input}
+       />
       </FormItem>
-
+      </div>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="col-span-1">
       <FormItem
-        label="Buy In Range (Max)"
-        invalid={(errors.buyInRange && touched.buyInRange) as boolean}
-      >
-        <Field
-          type="number"
-          autoComplete="off"
-          name="buyInRange[1]"
-          placeholder="Max Buy In Range"
-          component={Input}
-          onChange={handleBuyInRangeChange(1)}
-          value={values.buyInRange[1]}
-        />
+         label="Bill Number"
+         invalid={(errors.billNo&& touched.billNo) as boolean}
+         errorMessage={errors.billNo}
+       >
+         <Field
+           type="string"
+           autoComplete="off"
+           name="billNo"
+           placeholder="Enter a bill number"
+           component={Input}
+         />
+      </FormItem>
+      </div>
+      <div className="col-span-1">
+      <FormItem
+       label="Dana Reciever Name"
+       invalid={(errors. danaReceiverName&& touched.danaReceiverName) as boolean}
+       errorMessage={errors.danaReceiverName}
+     >
+       <Field
+         type="string"
+         autoComplete="off"
+         name="danaReceiverName"
+         placeholder="Enter a Name"
+         component={Input}
+       />
+      </FormItem>
+      </div>
+      </div>
+      <FormItem
+         label="Received From Which Person"
+         invalid={(errors.receivedFrom&& touched.receivedFrom) as boolean}
+         errorMessage={errors.receivedFrom}
+       >
+         <Field
+           type="string"
+           autoComplete="off"
+           name="receivedFrom"
+           placeholder="enter person"
+           component={Input}
+         />
       </FormItem>
     </AdaptableCard>
   );

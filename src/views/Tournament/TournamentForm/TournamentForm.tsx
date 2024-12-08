@@ -20,19 +20,12 @@ import WinnerPrizeField from "./WinnnerPrizeFields";
 type FormikRef = FormikProps<any>;
 
 type InitialData = {
-  _id: string;
-  name: string;
-  description: string;
-  winnerPrize: Array<number>;
-  image: string;
-  entryChips: number;
-  registrationStartDate: string;
-  registrationEndDate: string;
-  tournamentStartDate: string;
-  tournamentEndDate: string;
-  maxUserInTournament: number;
-  minUserInTournament: number;
-  tournamentDuration: number;
+  clientName: string;
+  quality: string;
+  dcNumber: number;
+  weight: "Pure" | "Mixing"; // Restricting options for select box
+  grossWeight: number;
+  billNo: number;
 };
 
 export type FormModel = Omit<InitialData, "tags"> & {
@@ -45,7 +38,7 @@ export type OnDeleteCallback = React.Dispatch<React.SetStateAction<boolean>>;
 
 type OnDelete = (callback: OnDeleteCallback) => void;
 
-type TournamentForm = {
+type clientForm = {
   initialData?: InitialData;
   type: "edit" | "new";
   onDiscard?: () => void;
@@ -56,22 +49,15 @@ type TournamentForm = {
 const { useUniqueId } = hooks;
 
 const validationSchema = Yup.object().shape({
-  name: Yup.string().required("Name is required"),
-  description: Yup.string().required("Description is required"),
-  winnerPrize: Yup.array(Yup.number()),
-  entryChips: Yup.number().required("Entry chips are required"),
-  
-  tournamentStartDate: Yup.date().required("Tournament start date is required"),
-  maxUserInTournament: Yup.number().required(
-    "Maximum users in tournament is required"
-  ),
-  minUserInTournament: Yup.number().required(
-    "Minimum users in tournament is required"
-  ),
-  tournamentDuration: Yup.number()
-  .required("Tournament duration is required")
-  .min(1, "Tournament duration must be at least 0 hours")
-  .max(24, "Tournament duration must be at most 24 hours"),
+  clientName: Yup.string().required("Client Name is required"),
+  quality: Yup.string().required("quality is required"),
+  dcNumber: Yup.number().required("DC Number is required"),
+  weight: Yup.mixed<"Pure" | "Mixing">()
+    .oneOf(["Pure", "Mixing"], "Invalid weight option")
+    .required("Weight is required"),
+
+    grossWeight: Yup.number().required("Gross Weight is required"),
+    billNo: Yup.number().required("Gross Weight is required"),
 });
  
 
@@ -188,22 +174,7 @@ const TournamentForm = forwardRef<FormikRef, TournamentForm>((props, ref) => {
 
   return (
     <AdaptableCard>
-      <div className="text-center">
-        {type == "new" ? <h5>Upload a picture</h5> : <h5>Edit picture</h5>}
-        <Upload
-          className="cursor-pointer"
-          showList={false}
-          uploadLimit={type == "new" ? 1 : 0}
-          beforeUpload={beforeUpload}
-          onChange={onFileUpload}
-        >
-          <Avatar
-            size={200}
-            src={avatarImg as string}
-            icon={<HiOutlinePlus />}
-          />
-        </Upload>
-      </div>
+      
       <Formik
         innerRef={ref}
         initialValues={cloneDeep(initialData)}
@@ -240,12 +211,7 @@ const TournamentForm = forwardRef<FormikRef, TournamentForm>((props, ref) => {
                     touched={touched}
                     errors={errors}
                   />
-                  <WinnerPrizeField
-                    page={type}
-                    touched={touched}
-                    errors={errors}
-                    values={values}
-                  />
+                  
                 </div>
               </div>
               <StickyFooter

@@ -7,16 +7,14 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 type FormFieldsName = {
-  name: string;
-  description: string;
-  winnerPrize: Array<number>;
-  image: string;
-  entryChips: number;
-  tournamentStartDate: string;
-  maxUserInTournament: number;
-  minUserInTournament: number;
-  tournamentDuration: number;
+  clientName: string;
+  quality: string;
+  dcNumber: number;
+  weight: "Pure" | "Mixing"; // Restricting options for select box
+  grossWeight: number;
+  billNo: number;
 };
+
 
 type BasicInformationFieldsProps = {
   touched: FormikTouched<FormFieldsName>;
@@ -42,107 +40,103 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
 
   return (
     <AdaptableCard divider className="mb-4">
-      <h5>Tournament Form</h5>
-      <p className="mb-6">Section to configure basic tournament information</p>
-
+      <h5>Client Info</h5>
+      <p className="mb-6">Section to configure basic Client information</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="col-span-1">
       <FormItem
-        label="Name"
-        invalid={Boolean(errors.name && touched.name)}
-        errorMessage={errors.name}
+        label="Client Name"
+        invalid={Boolean(errors.clientName && touched.clientName)}
+        errorMessage={errors.clientName}
       >
-        <Field type="text" autoComplete="off" name="name" component={Input} />
+        <Field type="text" autoComplete="off" name="clientName" component={Input} />
       </FormItem>
-
+   </div>
+   <div className="col-span-1">
       <FormItem
-        label="Description"
-        invalid={Boolean(errors.description && touched.description)}
-        errorMessage={errors.description}
+        label="quality"
+        invalid={Boolean(errors.quality && touched.quality)}
+        errorMessage={errors.quality}
       >
         <Field
           type="text"
           autoComplete="off"
-          name="description"
+          name="quality"
           component={Input}
         />
       </FormItem>
-
+      </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="col-span-1">
       <FormItem
-        label="Entry Chips"
-        invalid={Boolean(errors.entryChips && touched.entryChips)}
-        errorMessage={errors.entryChips}
+        label="DC Number"
+        invalid={Boolean(errors.dcNumber && touched.dcNumber)}
+        errorMessage={errors.dcNumber}
       >
         <Field
           type="number"
           autoComplete="off"
-          name="entryChips"
+          name=" dcNumber"
           component={Input}
         />
+        
       </FormItem>
-
+      </div>
+      <div className="col-span-1">
       <FormItem
-        label="Max Users in Tournament"
+        label="Bill No"
         invalid={Boolean(
-          errors.maxUserInTournament && touched.maxUserInTournament
+          errors.billNo && touched.billNo
         )}
-        errorMessage={errors.maxUserInTournament}
+        errorMessage={errors.billNo}
       >
         <Field
-          type="number"
+          type="billNo"
           autoComplete="off"
-          name="maxUserInTournament"
+          name="billNo"
           component={Input}
         />
       </FormItem>
-
+      </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="col-span-1">
       <FormItem
-        label="Tournament Duration"
-        invalid={Boolean(
-          errors.tournamentDuration && touched.tournamentDuration
-        )}
-        errorMessage={errors.tournamentDuration}
-      >
-        <Field
-          type="number"
-          autoComplete="off"
-          name="tournamentDuration"
-          component={Input}
-        />
-      </FormItem>
+  label="Weight"
+  invalid={Boolean(errors.weight && touched.weight)}
+  errorMessage={errors.weight}
+>
+  <Field 
+    as="select" 
+    name="weight"
+    className="form-select"
+  >
+    <option value="">Select Weight</option> {/* Placeholder option */}
+    <option value="Pure">Pure</option>
+    <option value="Mixing">Mixing</option>
+  </Field>
+</FormItem>
+</div>
 
-      
-
-      
-          <FormItem label="Tournament Start Date">
-            <DatePicker
-              selected={dates.tournamentStartDate}
-              onChange={(date: Date | null) => {
-                if (date) {
-                  handleDateChange("tournamentStartDate", date);
-                }
-              }}
-              showTimeSelect
-              timeFormat="HH:mm"
-              timeIntervals={15}  // Optional: You can adjust the interval for time selection
-              dateFormat="yyyy-MM-dd HH:mm"
-            />
-          </FormItem>
-
-      
-
+<div className="col-span-1">
       <FormItem
-        label="Min Users in Tournament"
+        label="Gross Weight"
         invalid={Boolean(
-          errors.minUserInTournament && touched.minUserInTournament
+          errors.grossWeight && touched.grossWeight
         )}
-        errorMessage={errors.minUserInTournament}
+        errorMessage={errors.grossWeight}
       >
         <Field
           type="number"
           autoComplete="off"
-          name="minUserInTournament"
+          name="grossWeight"
           component={Input}
         />
       </FormItem>
+</div>
+</div>
+     
     </AdaptableCard>
   );
 };

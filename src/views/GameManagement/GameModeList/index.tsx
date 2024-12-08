@@ -158,39 +158,39 @@ function GameModeList() {
   const columns: ColumnDef<StoreItem>[] = useMemo(
     () => [
       {
-        header: "Company Account",
-        accessorKey: "bigBlind",
+        header: "Date",
+        accessorKey: "date",
       },
       {
-        header: "Dana Receipt Weight",
-        accessorKey: "smallBlind",
+        header: "Weight",
+        accessorKey: "weight",
       },
       {
         header: "Quality",
-        accessorKey: "buyInRange",
+        accessorKey: "quality",
       },
       {
         header: "Quantity",
-        accessorKey: "buyInRange",
+        accessorKey: "quantity",
       },
 
       {
         header: "Received From",
-        accessorKey: "buyInRange",
+        accessorKey: "receivedFrom",
       },
 
       {
         header: "Bill No",
-        accessorKey: "buyInRange",
+        accessorKey: "billNo",
       },
 
       {
         header: "Dana Received Name",
-        accessorKey: "buyInRange",
+        accessorKey: "danaReceiverName",
       },
 
       {
-        header: "",
+        header: "Action",
         id: "action",
         cell: actionButtons,
       },

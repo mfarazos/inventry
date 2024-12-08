@@ -46,99 +46,42 @@ type GameModeForm = {
 const { useUniqueId } = hooks;
 
 const validationSchema = Yup.object().shape({
-  bigBlind: Yup.number().required("Big Blind Required"),
-  smallBlind: Yup.number().required("Small Blind Required"),
-  buyInRange: Yup.array()
-            .of(Yup.number().required("Each value in the Buy In Range is required"))
-            .test(
-              "is-max-greater-than-min",
-              "Max Buy In Range must be greater than Min Buy In Range",
-              function (value) {
-                if (Array.isArray(value) && value.length === 2) {
-                  const [min, max] = value;
-                  return max > min;
-                }
-                return true; // Skip validation if value is not an array with 2 elements
-              }
-            )
-            .required("Buy In Range Required"),
+  date: Yup.string().required("Date is required for Dana Receipt."),
+  weight: Yup.string().required("Weight value is required."),
+  quantity: Yup.number().required("Quantity must be provided."),
+  quality: Yup.string().required("Quality details are required."),
+  receivedFrom: Yup.string().required("Please specify who the dana is received from."),
+  billNo: Yup.string().required("Bill number is required."),
+  danaReceiverName: Yup.string().required("Dana receiver's name is required."),
+  
 });
 
 const GameModeForm = forwardRef<FormikRef, GameModeForm>((props, ref) => {
   const {
     type,
     initialData = {
-      bigBlind: 0,
-      smallBlind: 0,
-      image: "",
-      buyInRange: [],
+      date: new Date(), 
+      weight: "",
+      quality: "",
+      quantity: "",
+      receivedFrom: "",
+      billNo: "",
+      danaReceiverName: ""
     },
     onFormSubmit,
     onDiscard,
     onDelete,
   } = props;
 
-  const [avatarImg, setAvatarImg] = useState<string | null>(initialData.image);
-  const [file, setFile] = useState<File | null>(null);
-  const newId = useUniqueId("product-");
+  
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (type === "edit" && initialData.image) {
-      setAvatarImg(initialData.image);
-    }
-  }, [type, initialData.image]);
-
-  const onFileUpload = (files: File[]) => {
-    if (files.length > 0) {
-      setFile(files[0]);
-      setAvatarImg(URL.createObjectURL(files[0]));
-    }
-  };
-
-  const beforeUpload = (files: FileList | null) => {
-    
-    let valid: string | boolean = true;
-    
-    const allowedFileType = ["image/jpeg", "image/png"];
-    if (files) {
-      for (const file of files) {
-        if (!allowedFileType.includes(file.type)) {
-          valid = "Please upload a .jpeg or .png file!";
-        }
-      }
-    }
-    
-    return valid;
-  };
-
-  const uploadImg = async (file: File) => {
-    console.log("call or not");
-    const form = new FormData();
-    form.append("file", file);
-    const imgResponse = await uploadImage(form);
-
-    return imgResponse.data?.data?.file_url;
-  };
+  
+  
 
   return (
     <AdaptableCard>
-      <div className="text-center">
-        {type == "new" ? <h5>Upload a picture</h5> : <h5>Edit picture</h5>}
-        <Upload
-          className="cursor-pointer"
-          showList={false}
-          uploadLimit={type == "new" ? 1 : 0}
-          beforeUpload={beforeUpload}
-          onChange={onFileUpload}
-        >
-          <Avatar
-            size={200}
-            src={avatarImg as string}
-            icon={<HiOutlinePlus />}
-          />
-        </Upload>
-      </div>
+      
       <Formik
         innerRef={ref}
         initialValues={{
@@ -149,13 +92,7 @@ const GameModeForm = forwardRef<FormikRef, GameModeForm>((props, ref) => {
           const formData = cloneDeep(values);
 
           try {
-            if (file) {
-              const imageUrl = await uploadImg(file);
-              formData.image = imageUrl;
-            }
-            if (!formData.image) {
-              return alert("image must be insert");
-            }
+            
 
             onFormSubmit?.(formData, setSubmitting);
           } catch (error) {
