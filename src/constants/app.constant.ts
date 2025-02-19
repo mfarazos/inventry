@@ -1,4 +1,4 @@
-export const APP_NAME = "Poker";
+export const APP_NAME = "Inventory";
 export const PERSIST_STORE_NAME = "admin";
 export const REDIRECT_URL_KEY = "redirectUrl";
 

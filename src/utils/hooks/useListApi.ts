@@ -18,6 +18,8 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState("");
   const [data, setData] = useState<T[]>([]);
+  const [weightData, setWeightData] = useState({});
+  const [billData, setbillData] = useState([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [sort, setSort] = useState<OnSortParam | null>(null);
   const [query, setQuery] = useState<string>("");
@@ -45,6 +47,10 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
       sortBy,
       ...filterOptions,
     };
+    if(!params?.product || !params.month){
+      setLoading(false);
+      return;
+    }
 
     try {
       // fetch result
@@ -59,11 +65,16 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
 
       // set data in state
       setLoading(false);
-      setData(result.data.data);
-      setPageIndex(result.data.page?.page ?? 1);
-      setPageSize(result.data.page?.limit ?? 10);
-      setTotal(result.data.page?.totalDocs ?? 0);
+      setData(result.data.data.data);
+      setWeightData(result.data.data?.weight || {});
+      setbillData(result.data.data?.billNo || []);
+      setPageIndex(result.data.data.page?.page ?? 1);
+      setPageSize(result.data.data?.page?.limit ?? 10);
+      setTotal(result.data.data?.page?.totalDocs ?? 0);
     } catch (error) {
+      setData([]);
+      setWeightData({});
+      setbillData([]);
       console.log(`error`, error);
       setLoading(false);
     }
@@ -151,6 +162,8 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
     pageSize,
     total,
     data,
+    weightData,
+    billData,
     selectedItem,
     showDeleteDialog,
     loading,

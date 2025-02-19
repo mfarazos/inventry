@@ -53,19 +53,19 @@ export const protectedRoutes = [
   {
     key: `game`,
     path: "/game",
-    component: lazy(() => import("@/views/GameManagement/GameModeList")),
+    component: lazy(() => import("@/views/companypurchase/companypurchaselist")),
     authority: [],
   },
   {
     key: `creategamemodes`,
     path: "/creategamemodes",
-    component: lazy(() => import("@/views/GameManagement/CreateGameModes")),
+    component: lazy(() => import("@/views/companypurchase/Createcompanypurchase")),
     authority: [],
   },
   {
     key: `Editgame`,
     path: "/EditGameMode/:GameModeId",
-    component: lazy(() => import("@/views/GameManagement/EditGameModes")),
+    component: lazy(() => import("@/views/companypurchase/Editcompanypurchase")),
     authority: [],
   },
   
@@ -94,25 +94,39 @@ export const protectedRoutes = [
   {
     key: "createtournament",
     path: `/createtournament`,
-    component: lazy(() => import("@/views/Tournament/CreateTournament")),
+    component: lazy(() => import("@/views/Customer/CreateCustomer")),
     authority: [],
   },
   {
     key: "tournament",
     path: `/tournament`,
-    component: lazy(() => import("@/views/Tournament/TournamentList")),
+    component: lazy(() => import("@/views/Customer/Customerlist")),
     authority: [],
   },
-  {
-    key: "tournamentDetails",
-    path: `/tournamentDetails/:id`,
-    component: lazy(() => import("@/views/Tournament/TournamentDetails")),
-    authority: [],
-  },
+  
   {
     key: "editTournament",
     path: `/editTournament/:id`,
-    component: lazy(() => import("@/views/Tournament/EditTournamnet")),
+    component: lazy(() => import("@/views/Customer/EditCustomer")),
+    authority: [],
+  },
+  {
+    key: "extrudingAccount",
+    path: `/extrudingAccount`,
+    component: lazy(() => import("@/views/companyCustomer/SpecificCustomerlist")),
+    authority: [],
+  },
+
+  {
+    key: "billing",
+    path: `/billing`,
+    component: lazy(() => import("@/views/billing/walkingCustomerlist")),
+    authority: [],
+  },
+  {
+    key: "showbilling",
+    path: `/showbilling`,
+    component: lazy(() => import("@/views/billing/bllingList")),
     authority: [],
   },
 ];

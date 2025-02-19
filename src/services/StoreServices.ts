@@ -37,11 +37,23 @@ export async function apiUpdateSalesProduct<
   U extends Record<string, unknown>,
 >(data: U) {
   return ApiService.fetchData<T>({
-    url: "/adminStore/update-store-item",
+    url: "/inventoryApp/editMaterial",
     method: "patch",
     data,
   });
 }
+
+export async function apiUpdateCustomer<
+  T,
+  U extends Record<string, unknown>,
+>(data: U) {
+  return ApiService.fetchData<T>({
+    url: "/inventoryApp/editCustomer",
+    method: "patch",
+    data,
+  });
+}
+
 export async function storeToggleActive(data: any) {
   return ApiService.fetchData<ApiResponse<any>>({
     url: "/admin/isActive",

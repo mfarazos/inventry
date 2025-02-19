@@ -4,7 +4,7 @@ import type { SignInCredential, SignInResponse } from '@/@types/auth'
 
 export async function apiSignIn(data: SignInCredential) {
     return ApiService.fetchData<SignInResponse>({
-        url: '/adminAuth/sign-in',
+        url: '/inventoryApp/loginUser',
         method: 'post',
         data,
     })
