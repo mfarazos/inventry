@@ -225,9 +225,14 @@ import {
           accessorKey: "date",
           cell: (props) => {
             const { date } = props.row.original;
-            let dateOne = new Date(date).toISOString().slice(0, 10)
-            return <span>{new Date(dateOne).toLocaleDateString()}</span>; // Extracts "YYYY-MM-DD"
-          },
+            let dateObj = new Date(date);
+        
+            let day = String(dateObj.getDate()).padStart(2, '0');
+            let month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            let year = dateObj.getFullYear();
+        
+            return <span style={{ whiteSpace: "nowrap" }}>{`${day}-${month}-${year}`}</span>;
+        }
         },
         {
           header: "Client Name",
@@ -243,14 +248,19 @@ import {
         },
 
         {
-          header: "Weight Pure",
-          accessorKey: "weightPure",
+          header: "ratio",
+          accessorKey: "ratio",
         },
 
-        {
-          header: "Weight Mixing",
-          accessorKey: "weightMixing",
-        },
+        // {
+        //   header: "Weight Pure",
+        //   accessorKey: "weightPure",
+        // },
+
+        // {
+        //   header: "Weight Mixing",
+        //   accessorKey: "weightMixing",
+        // },
 
         {
           header: "Gross Weight",
@@ -276,10 +286,11 @@ import {
         },
         
         
-        {
-          header: "product",
-          accessorKey: "product",
-        },
+        
+        // {
+        //   header: "product",
+        //   accessorKey: "product",
+        // },
 
         {
           header: "Status",

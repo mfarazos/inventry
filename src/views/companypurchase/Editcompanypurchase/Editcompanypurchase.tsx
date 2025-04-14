@@ -78,7 +78,7 @@ const Companypurchaseedit = () => {
         placement: "top-center",
       }
     );
-    navigate("/game");
+    navigate("/inventrylist");
   };
 
   useEffect(() => {

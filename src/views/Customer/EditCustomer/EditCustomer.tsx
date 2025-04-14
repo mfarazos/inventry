@@ -76,7 +76,7 @@ const EditCustomer = () => {
         placement: "top-center",
       }
     );
-    navigate("/tournament");
+    navigate("/inventrylist");
   };
 
   useEffect(() => {

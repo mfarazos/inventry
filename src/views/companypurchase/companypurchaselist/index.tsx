@@ -19,10 +19,12 @@ import {
   import useListApi from "@/utils/hooks/useListApi";
   import HeaderContent from "@/components/shared/HeaderContent";
   import {
-    delGameMode,
+    deleteMaterial,
     deleteGameMode,
+    deleteCustomers,
     getGameModes,
-    upadateByStatusMaterial
+    upadateByStatusMaterial,
+    upadateByStatusCustomer
   } from "@/services/GameManagement";
   import CustomConfirmDialog from "@/components/shared/CustomConfirmDialog";
   import { storeItemTypesOptions } from "@/configs/dropdown.config";
@@ -61,7 +63,7 @@ import {
       filter,
       setData,
       setFilter,
-    } = useListApi<any>(listUrl, deleteUrl, 10);
+    } = useListApi<any>(listUrl, deleteUrl, 50);
   
     // table ref
     const tableRef = useRef<DataTableResetHandle>(null);
@@ -99,9 +101,14 @@ import {
     };
     // on edit item
     const handleEditClick = useCallback(
-      (id: string) => () => {
+      (id: string, type: string) => () => {
         console.log(`item selected`, id);
-        navigate(`/editGameMode/${id}`);
+    
+        if (type === 'sale') {
+          navigate(`/editTournament/${id}`);
+        } else if (type === 'purchase') {
+          navigate(`/editGameMode/${id}`);
+        }
       },
       []
     );
@@ -119,88 +126,116 @@ import {
       setSelectedMonth(itemSelected);
     };
   
-    const onDelete = useCallback(
-      (id: string) => async () => {
-        // console.log(`item selected`, id);
-        // navigate(`/editGameMode/${id}`);
-        const abc = await Swal.fire({
-          title: "Warning !",
-          text: `are shure you want to delete?`,
-          icon: "warning",
-          confirmButtonText: "yes",
-        });
-        if (abc.isConfirmed) {
-          try {
-            const result = await delGameMode(id);
-            setData((prev) => prev.filter((user) => user._id !== id));
-          } catch (error) {
-            
-          }
-         
-      
-        }
-  
-        // console.log("SELECTED ITEM DELETE", result);
-        // setData(result.data?.data);
-      },
-      []
-    );
-
-    const approved =  useCallback(
-          (status: boolean, id: string) => async () => {
-            console.log(status);
+   const onDelete = useCallback(
+         (id: string, type: string) => async () => {
+           // console.log(`item selected`, id);
+           // navigate(`/editGameMode/${id}`);
+           const abc = await Swal.fire({
+             title: "Warning !",
+             text: `are shure you want to delete?`,
+             icon: "warning",
+             confirmButtonText: "yes",
+           });
+           if (abc.isConfirmed) {
+             try {
+              if (type === "sale") {
+                
+                const result = await deleteCustomers(id);
+                
+              } else if (type === "purchase") {
+                
+                const result = await deleteMaterial(id);
+               
+              }
+             
+               
+             setData((prev) => prev.filter((user) => user._id !== id));
+             } catch (error) {
+               
+             }
+             
+           }
+     
+           // console.log("SELECTED ITEM DELETE", result);
+           // setData(result.data?.data);
+         },
+         []
+       );
+   
     
-            const abc = await Swal.fire({
-              title: "Warning !",
-              text: `are shure you want to Approved?`,
-              icon: "warning",
-              confirmButtonText: "yes",
-            });
-            if (abc.isConfirmed) {
-              try {
-                const updateStatus = await upadateByStatusMaterial(id);
-                if(updateStatus){
-                  const isStatus = "approved";
+
+       const approved = useCallback(
+        (status: boolean, id: string, type: string) => async () => {
+          console.log(status);
+      
+          const abc = await Swal.fire({
+            title: "Warning!",
+            text: "Are you sure you want to approve?",
+            icon: "warning",
+            confirmButtonText: "Yes",
+          });
+      
+          if (abc.isConfirmed) {
+            try {
+              let updateStatusResponse;
+      
+           
+              if (type === "sale") {
+                updateStatusResponse = await upadateByStatusCustomer(id); 
+              } else if (type === "purchase") {
+                updateStatusResponse = await upadateByStatusMaterial(id);  
+              }
+             
+              if (updateStatusResponse) {
+                const newStatus = "approved";  
                 setData((prev) =>
                   prev.map((user) =>
-                    user._id === id ? { ...user, status: isStatus } : user
+                    user._id === id ? { ...user, status: newStatus } : user
                   )
                 );
       
-                return isStatus;
-                }
-                
-              } catch (error) {}
-          
+                return newStatus;
+              }
+      
+            } catch (error) {
+              console.error("Error updating status:", error);
             }
-            
-          },[]);
-  
+          }
+        },
+        []
+      );
+      
+     
     // action button cell
     const actionButtons = (props: CellContext<StoreItem, unknown>) => {
-      const { _id, status } = props.row.original;
+      const { _id, status, type } = props.row.original;
       //   const { isActive } = props.row.original;
   
       return (
         <div className="flex justify-end text-lg">
           {status == "pending" && (<span
               className={`cursor-pointer p-2 hover:${textTheme}`}
-              onClick={approved(status, _id)}
+              onClick={approved(status, _id, type)}
             >
               <HiEye />
             </span>)}
           <span
             className={`cursor-pointer p-2 hover:${textTheme}`}
-            onClick={handleEditClick(_id)}
+            onClick={handleEditClick(_id, type)}
           >
             <HiOutlinePencil />
           </span>
+
+    
           <span
             className="cursor-pointer p-2 hover:text-red-500"
-            onClick={onDelete(_id)}
+            onClick={onDelete(_id, type, )}
           >
             <HiOutlineTrash />
           </span>
+
+
+         
           {/* <span
               className="cursor-pointer p-2 hover:text-red-500"
               onClick={handleDeleteClick(_id)}
@@ -219,137 +254,185 @@ import {
   
     // columns
     const columns: ColumnDef<StoreItem>[] = useMemo(
-      () => [
-        {
-          header: "Date",
-          accessorKey: "date",
-          cell: (props) => {
-            const { date } = props.row.original;
-            let dateOne = new Date(date).toISOString().slice(0, 10)
-            return <span>{new Date(dateOne).toLocaleDateString()}</span>; // Extracts "YYYY-MM-DD"
-          },
-        
-        },
-        
-        {
-          header: "Bags Pure",
-          accessorKey: "pureBags",
-          cell: (props) => {
-            const { pureBags } = props.row.original;
-            return <span>{pureBags} bags</span>; // Extracts "YYYY-MM-DD"
-          },
-        },
+  () => [
+    {
+      header: "Date",
+      cell: (props) => {
+        const { date } = props.row.original;
+        let dateObj = new Date(date);
 
-        {
-          header: "Bags mixing",
-          accessorKey: "mixingBags",
+        let day = String(dateObj.getDate()).padStart(2, '0');
+        let month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        let year = dateObj.getFullYear();
 
-          cell: (props) => {
-            const { mixingBags } = props.row.original;
-            return <span>{mixingBags} bags</span>; // Extracts "YYYY-MM-DD"
-          },
-        },
+        return (
+          <span style={{ whiteSpace: "nowrap" }}>
+            {`${day}-${month}-${year}`}
+          </span>
+        );
+      },
+    },
 
-         
-        {
-          header: "Mixing Bags Weight",
-          accessorKey: "mixingBagsWeight",
-          cell: (props) => {
-            const { mixingBagsWeight } = props.row.original;
-            return <span>{mixingBagsWeight} kg</span>; // Extracts "YYYY-MM-DD"
-          },
-        },
-         
-        {
-          header: "Total Bags",
-          accessorKey: "totalBags",
+    {
+      header: "Total Bags",
+      cell: (props) => {
+        const { totalBags, type } = props.row.original;
+        return type === "purchase" ? <span>{totalBags} bags</span> : <span>-</span>;
+      },
+    },
 
-          cell: (props) => {
-            const { totalBags } = props.row.original;
-            return <span>{totalBags} bags</span>; // Extracts "YYYY-MM-DD"
-          },
-        },
+    {
+      header: "Total Weight",
+      cell: (props) => {
+        const { grossWeight, type } = props.row.original;
+        return type === "purchase" ? <span>{grossWeight} kg</span> : <span>-</span>;
         
-        {
-          header: "Quality",
-          accessorKey: "quality",
+      },
+    },
+
+    //
+    ...(userName ? [
+      {
+        header: "tafree",
+        accessorKey: "clientName",
+        cell: (props) => {
+          const { clientName, type } = props.row.original;
+          return type === "sale" ? <span>{clientName}</span> : <span>-</span>;
         },
+      },
+    ] : []),
+    //
+    // === Purchase Side Columns ===
+    {
+      header: "Received From",
+      cell: (props) => {
+        const { receivedFrom, type } = props.row.original;
+        return type === "purchase" ? <span>{receivedFrom}</span> : <span>-</span>;
+      },
+    },
+    {
+      header: "Quality",
+      cell: (props) => {
+        const { quality, type } = props.row.original;
+        return type === "purchase" ? <span>{quality}</span> : <span>-</span>;
+      },
+    },
+    {
+      header: "Voucher Number",
+      cell: (props) => {
+        const { billNo, type } = props.row.original;
+        return type === "purchase" ? <span>{billNo}</span> : <span>-</span>;
+      },
+    },
+
+    // === Sale Side Columns ===
+
+
+   
+     {  
+      header: "Client Name",
+      cell: (props) => {
+        const { clientName, type } = props.row.original;
+        return type === "sale" ? <span>{clientName}</span> : <span>-</span>;
+      },
+    },
+
+
+    {
+      header: "Quality",
+      cell: (props) => {
+        const { quality, type } = props.row.original;
+        return type === "sale" ? <span>{quality}</span> : <span>-</span>;
+      },
+    },
+    {
+      header: "DC Number",
+      cell: (props) => {
+        const { dcNumber, type } = props.row.original;
+        return type === "sale" ? <span>{dcNumber}</span> : <span>-</span>;
+      },
+    },
+    {
+      header: "Ratio",
+      cell: (props) => {
+        const { ratio, type } = props.row.original;
+        return type === "sale" ? <span>{ratio}</span> : <span>-</span>;
+      },
+    },
+    {
+      header: "Gross Weight",
+      cell: (props) => {
+        const { grossWeight, type } = props.row.original;
+        return type === "sale" ? <span>{grossWeight} kg</span> : <span>-</span>;
+      },
+    },
+    {
+      header: "Rate",
+      cell: (props) => {
+        const { rate, type } = props.row.original;
+        return type === "sale" ? <span>{rate}</span> : <span>-</span>;
+      },
+    },
+    {
+      header: "Amount",
+      cell: (props) => {
+        const { amount, type } = props.row.original;
+        return type === "sale" ? <span>{amount}</span> : <span>-</span>;
+      },
+    },
+    {
+      header: "Bill Number",
+      cell: (props) => {
+        const { billNo, type } = props.row.original;
+        return type === "sale" ? <span>{billNo}</span> : <span>-</span>;
+      },
+    },
+
+    // === Status Column ===
+    {
+      header: "Status",
+      cell: (props) => {
+        const { status } = props.row.original;
+        const isPending = status?.toLowerCase() === "pending";
+
+        return (
+          <span
+            style={{
+              display: "inline-block",
+              padding: "4px 8px",
+              borderRadius: "12px",
+              color: "white",
+              backgroundColor: isPending ? "red" : "green",
+              fontSize: "12px",
+            }}
+          >
+            {status}
+          </span>
+        );
+      },
+    },
+
+    // === Action Column ===
+    {
+      header: "Action",
+      id: "action",
+      cell: (props) => {
+        const row = props.row.original;
+        const bgColor = row.type === "purchase" ? "#e0f7fa" : "#e8f5e9"; // Light blue vs light green
+        return (
+          <div style={{ backgroundColor: bgColor, padding: "8px", borderRadius: "8px" }}>
+            {actionButtons(props)}
+          </div>
+        );
+      },
+    },
+  ],
+  []
+
   
-  
-        
-        {
-          header: "Weight Pure",
-          accessorKey: "weightPure",
-        /*  cell: (props) => {
-            const { weightPure } = props.row.original;
-            return <span>{ (weightPure*25) }kg</span>; // Extracts "YYYY-MM-DD"
-          }, */
-        }, 
-  
-        {
-          header: "Weight Mixing",
-          accessorKey: "weightMixing",
-          // cell: (props) => {
-          //   const { weightMixing } = props.row.original;
-          //   return <span>{ (weightMixing * 25) } kg</span>; // Extracts "YYYY-MM-DD"
-          // },
-        },
-  
-        {
-          header: "total Weight",
-          accessorKey: "grossWeight",
-          // cell: (props) => {
-          //   const {grossWeight} = props.row.original;
-          //   return <span>{ (grossWeight * 25) }kg</span>; // Extracts "YYYY-MM-DD"
-          // },
-        },
-        {
-          header: "Quantity",
-          accessorKey: "quantity",
-        },
-  
-        {
-          header: "Received From",
-          accessorKey: "receivedFrom",
-        },
-  
-        {
-          header: "Bill No",
-          accessorKey: "billNo",
-        },
-  
-        {
-          header: "Status",
-          accessorKey: "status",
-          cell: (props) => {
-            const { status } = props.row.original;
-            const isPending = status.toLowerCase() === "pending";
-        
-            return (
-              <span
-                style={{
-                  display: "inline-block",
-                  padding: "4px 8px",
-                  borderRadius: "12px",
-                  color: "white",
-                  backgroundColor: isPending ? "red" : "green",
-                  fontSize: "12px",
-                }}
-              >
-                {status}
-              </span>
-            );
-          },
-        },
-  
-        {
-          header: "Action",
-          id: "action",
-          cell: actionButtons,
-        },
-      ],
-      []
-    );
+);
+
+
   
     // main view
     return (
@@ -367,9 +450,11 @@ import {
             />
           </Dialog>
           <HeaderContent
-            text= {userName? userName + " " + "Receiving" : "Purchase"}
-            addButtonText="Add Dana Receipt"
-            addLink="/creategamemodes"
+            text= {userName? userName + " " + "Account" : "Company Accounts"}
+            addButtonText1="Add Dana Receipt"
+            addLink1="/creategamemodes"
+            addButtonText2="Add Customer Receipt"
+            addLink2= "/createtournament"
             state = {{userType: userType || "walkingCustomer", userId: userId || null, userName: userName || null}}
             onChangeDropDown={onChangeDropDown}
             onChangeMonth={onChangeMonth}

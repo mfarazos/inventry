@@ -222,7 +222,7 @@ import {
             //onDialogOpen={handleOpenModal}
             //addLink="/createtournament"
             //onChangeDropDown={onChangeDropDown}
-            //showSearch={true}
+            showSearch={true}
             //weightData={weightData}
             
             onChangeMonth={onChangeMonth}
@@ -230,7 +230,7 @@ import {
             isMonthPicket={true}
             // dropDownSelectedValue={productType}
             // dropDownOptions={[{value: "poleythene", label: "Poleythene"},{value: "hydensity", label: "Hydensity"}]}
-           // onEditSearch={onEditSearch}
+            onEditSearch={onEditSearch}
           />
           <DataTable
             ref={tableRef}

@@ -4,7 +4,9 @@ import Input from "@/components/ui/Input";
 import { FormItem } from "@/components/ui/Form";
 import { Field,FieldProps, FormikErrors, FormikTouched, useFormikContext } from "formik";
 
-
+import DatePicker from 'react-datepicker';
+import { format } from 'date-fns';
+import 'react-datepicker/dist/react-datepicker.css';
 
 
 
@@ -64,7 +66,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       
       <div className="col-span-1">
-      <FormItem
+      {/* <FormItem
         label="Date"
         //invalid={(errors.date && touched.date) as boolean}
          //errorMessage={errors.date}
@@ -76,39 +78,37 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
           placeholder="Select date"
           component={Input}
         />
+      </FormItem> */}
+       <FormItem
+        label="Date"
+        //invalid={Boolean(errors.date && touched.date)}
+        //errorMessage={errors.date}
+        >
+      <DatePicker
+    selected={values.date ? new Date(values.date) : null}
+    onChange={(date: Date | null) => setFieldValue('date', date)}
+    dateFormat="dd/MM/yyyy"
+    placeholderText="dd-mm-yyyy"
+    className="w-full px-20 py-2 border rounded"
+    isClearable
+  />
       </FormItem>
       </div>
       
       <div className="col-span-1">
       <FormItem
-  label="Quality"
-  invalid={(errors.quality && touched.quality) as boolean}
-  errorMessage={errors.quality}
->
-  <Field
-    type="text"  // 'string' se 'text' change kiya
-    autoComplete="off"
-    name="quality"
-    placeholder="Enter Quality"
-    component={Input}
-    style={{
-      width: '100%',              // Full width
-      minHeight: '40px',          // Minimum height
-      height: 'auto',             // Height ko auto set karenge
-      padding: '8px',             // Padding for space
-      fontSize: '16px',           // Font size
-      borderRadius: '4px',        // Rounded corners
-      border: '1px solid #ccc',  // Border styling
-      resize: 'none',             // Disable manual resize
-      overflow: 'hidden',         // Ensure that no text overflows the field
-    }}
-    onInput={(e: React.ChangeEvent<HTMLInputElement>) => {  // TypeScript fix for event parameter
-      e.target.style.height = 'auto';  
-      e.target.style.height = `${e.target.scrollHeight}px`;
-    }}
-  />
-</FormItem>
-
+         label="Received From"
+         invalid={(errors.receivedFrom&& touched.receivedFrom) as boolean}
+         errorMessage={errors.receivedFrom}
+       >
+         <Field
+           type="string"
+           autoComplete="off"
+           name="receivedFrom"
+           placeholder="enter person"
+           component={Input}
+         />
+      </FormItem>
 
       </div>
       
@@ -218,25 +218,27 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
       </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    
       <div className="col-span-1">
    
       <FormItem
-         label="Received From"
-         invalid={(errors.receivedFrom&& touched.receivedFrom) as boolean}
-         errorMessage={errors.receivedFrom}
-       >
-         <Field
-           type="string"
-           autoComplete="off"
-           name="receivedFrom"
-           placeholder="enter person"
-           component={Input}
-         />
-      </FormItem>
+label="Quality"
+invalid={(errors.quality && touched.quality) as boolean}
+errorMessage={errors.quality}
+>
+<Field
+  type="text"  
+  autoComplete="off"
+  name="quality"
+  placeholder="Enter Quality"
+  component={Input}
+ 
+  
+/>
+</FormItem>
    </div>
    
-      </div>
+      
 
     
 
@@ -268,3 +270,4 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
 };
 
 export default BasicInformationFields;
+

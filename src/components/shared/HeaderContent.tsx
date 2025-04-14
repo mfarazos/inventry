@@ -7,8 +7,11 @@ import { ChangeEvent } from "react";
 
 type HeaderContentProps = {
   text: string;
-  addButtonText?: string;
-  addLink?: string;
+  addButtonText1?: string;
+  addLink1?: string;
+  addButtonText2?: string;
+  addLink2?: string;
+  
   state?: any;
   onDialogOpen?: () => void
   isModal?: boolean;
@@ -32,8 +35,10 @@ const allOption = { value: "", label: "All" };
 const HeaderContent = (props: HeaderContentProps) => {
   const {
     text,
-    addButtonText,
-    addLink,
+    addButtonText1,
+    addLink1,
+    addButtonText2,
+    addLink2,
     isModal,
     onDialogOpen,
     state,
@@ -115,14 +120,22 @@ const HeaderContent = (props: HeaderContentProps) => {
   
           {isModal && onDialogOpen && (
             <Button block variant="solid" onClick={onDialogOpen} size="sm" icon={<HiPlusCircle />}>
-              {addButtonText}
+              {addButtonText1}
             </Button>
           )}
   
-          {addButtonText && addLink && (
-            <Link className="block lg:inline-block md:mb-0 mb-4" to={addLink} state={state}>
+          {addButtonText1 && addLink1 && (
+            <Link className="block lg:inline-block md:mb-0 mb-4" to={addLink1} state={state}>
               <Button block variant="solid" size="sm" icon={<HiPlusCircle />}>
-                {addButtonText}
+                {addButtonText1}
+              </Button>
+            </Link>
+          )}
+
+           {addButtonText2 && addLink2 && (
+            <Link className="block lg:inline-block md:mb-0 mb-4" to={addLink2} state={state}>
+              <Button block variant="solid" size="sm" icon={<HiPlusCircle />}>
+                {addButtonText2}
               </Button>
             </Link>
           )}
@@ -144,39 +157,59 @@ const HeaderContent = (props: HeaderContentProps) => {
         <tbody>
           <tr>
             <td className="border border-gray-400 px-4 py-2">Opening balance</td>
-            <td className="border border-gray-400 px-4 py-2">{weightData?.openingWeight?.weightPure || 0}</td>
-            <td className="border border-gray-400 px-4 py-2">{weightData?.openingWeight?.weightMixing || 0}</td>
+            <td className="border border-gray-400 px-4 py-2">{weightData?.openingBalanceWeightPure || 0}</td>
+            <td className="border border-gray-400 px-4 py-2">{weightData?.openingBalanceWeightMixing || 0}</td>
             <td className="border border-gray-400 px-4 py-2">
-              {(weightData?.openingWeight?.weightPure || 0) + (weightData?.openingWeight?.weightMixing || 0)}
+              {(weightData?.openingBalanceWeightPure || 0) + (weightData?.openingBalanceWeightMixing || 0)}
             </td>
           </tr>
           
           
          
- {weightData?.totalWeight && (
     <tr>
+       <td className="border border-gray-400 px-4 py-2">Total dana received by party</td>
+       <td className="border border-gray-400 px-4 py-2">{weightData?.purchaseWeightPure || 0}</td>
+       <td className="border border-gray-400 px-4 py-2">{weightData?.purchaseWeightMixing || 0}</td>
        <td className="border border-gray-400 px-4 py-2">
-  {text === "Purchase"
-    ? "Total dana received by party"
-    : text === "Sales"
-    ? "Total consumption"
-    : ""}
-</td>
-       <td className="border border-gray-400 px-4 py-2">{weightData?.totalWeight?.totalPure || 0}</td>
-       <td className="border border-gray-400 px-4 py-2">{weightData?.totalWeight?.totalMixing || 0}</td>
-       <td className="border border-gray-400 px-4 py-2">
-      {(weightData?.totalWeight?.totalMixing || 0) + (weightData?.totalWeight?.totalPure || 0)}
+      {(weightData?.purchaseWeightPure || 0) + (weightData?.purchaseWeightMixing || 0)}
        </td>
      </tr>
-    )}
+
+     <tr>
+       <td className="border border-gray-400 px-4 py-2">Total dana received + openingBalance</td>
+       <td className="border border-gray-400 px-4 py-2">{weightData?.totalPurchaseWeightPure || 0}</td>
+       <td className="border border-gray-400 px-4 py-2">{weightData?.totalPurchaseWeightMixing || 0}</td>
+       <td className="border border-gray-400 px-4 py-2">
+      {(weightData?.totalPurchaseWeightPure || 0) + (weightData?.totalPurchaseWeightMixing || 0)}
+       </td>
+     </tr>
+
+     <tr>
+       <td className="border border-gray-400 px-4 py-2">Total dana consumption</td>
+       <td className="border border-gray-400 px-4 py-2">{weightData?.saleWeightPure || 0}</td>
+       <td className="border border-gray-400 px-4 py-2">{weightData?.saleWeightMixing || 0}</td>
+       <td className="border border-gray-400 px-4 py-2">
+      {(weightData?.saleWeightPure || 0) + (weightData?.saleWeightMixing || 0)}
+       </td>
+     </tr>
+    
 
           
           <tr>
             <td className="border border-gray-400 px-4 py-2">Closing Balance</td>
-            <td className="border border-gray-400 px-4 py-2">{weightData?.closingWeight?.weightPure || 0}</td>
-            <td className="border border-gray-400 px-4 py-2">{weightData?.closingWeight?.weightMixing || 0}</td>
+            <td className="border border-gray-400 px-4 py-2">{weightData?.closingWeightPure || 0}</td>
+            <td className="border border-gray-400 px-4 py-2">{weightData?.closingWeightMixing || 0}</td>
             <td className="border border-gray-400 px-4 py-2">
-              {(weightData?.closingWeight?.weightPure || 0) + (weightData?.closingWeight?.weightMixing || 0)}
+              {(weightData?.closingWeightPure || 0) + (weightData?.closingWeightMixing || 0)}
+            </td>
+          </tr>
+
+          <tr>
+            <td className="border border-gray-400 px-4 py-2">Bags</td>
+            <td className="border border-gray-400 px-4 py-2">{weightData?.Purebags || 0}</td>
+            <td className="border border-gray-400 px-4 py-2">{weightData?. Mixingbags || 0}</td>
+            <td className="border border-gray-400 px-4 py-2">
+              {(weightData?.Purebags || 0) + (weightData?.Mixingbags || 0)}
             </td>
           </tr>
         </tbody>

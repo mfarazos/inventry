@@ -53,9 +53,9 @@ import Customerform, {
             }
           );
           if (userType === "specificCustomer") {
-            navigate("/tournament", { state: { userType: "specificCustomer", userId: userId, userName: userName } });
+            navigate("/inventrylist", { state: { userType: "specificCustomer", userId: userId, userName: userName } });
           } else {
-            navigate("/tournament");
+            navigate("/inventrylist");
           }
         }
       });

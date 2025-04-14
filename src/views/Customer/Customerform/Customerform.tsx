@@ -93,7 +93,8 @@ const CustomerForm = forwardRef<FormikRef, clientForm>((props, ref) => {
       product: '',
       userId: userId || null,
       userType: userType || 'walkingCustomer',
-      phoneNumber: ''
+      phoneNumber: '',
+      ratio: ''
     },
     onFormSubmit,
     onDiscard,

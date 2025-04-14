@@ -51,9 +51,9 @@ import Companypurchaseform, {
             }
           );
           if (userType === "specificCustomer") {
-            navigate("/game", { state: { userType: "specificCustomer", userId: userId, userName: userName } });
+            navigate("/inventrylist", { state: { userType: "specificCustomer", userId: userId, userName: userName } });
           } else {
-            navigate("/game");
+            navigate("/inventrylist");
           }
           
            

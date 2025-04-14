@@ -21,10 +21,12 @@ import {
   import useListApi from "@/utils/hooks/useListApi";
   import HeaderContent from "@/components/shared/HeaderContent";
   import {
-    deleteCustomers,
+    deleteCategoryCustomer,
     deleteGameMode,
     getCategorycustomers,
-    createCompanyCustomer
+    createCompanyCustomer,
+    getCategoryCustomerById,
+    editCategoryCustomer
   } from "@/services/GameManagement";
   import CustomConfirmDialog from "@/components/shared/CustomConfirmDialog";
   import { storeItemTypesOptions } from "@/configs/dropdown.config";
@@ -38,6 +40,10 @@ import {
     const { textTheme } = useThemeClass();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
+    const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null); // Track editing state
+    const [customerName, setCustomerName] = useState<string>("");
+
+
 
 
    
@@ -115,7 +121,7 @@ import {
         });
         if (abc.isConfirmed) {
           try {
-            const result = await deleteCustomers(id);
+            const result = await deleteCategoryCustomer(id);
             
           setData((prev) => prev.filter((user) => user._id !== id));
           } catch (error) {
@@ -134,27 +140,48 @@ import {
       navigate(path, { state });
     };
 
-    const handleCloseModal = () => {
-      setIsOpen(false);
-    };
+     const handleCloseModal = () => {
+    setIsOpen(false);
+    setEditingCustomerId(null); // Reset the editing state on modal close
+    setCustomerName(""); // Clear the input field
+  };
+   
+  const handleOpenModal = async (id: string) => {
+    setIsOpen(true);
+    setEditingCustomerId(id); // Set customer ID for editing
 
-    const createCustomer = async (name: string) => {
-      try {
-        await createCompanyCustomer({clientName: name, type: "specificCustomer" });
-        setIsOpen(false);
-        setFilter({product: productType, month: selectedMonth, type: "specificCustomer" })
-          
-      } catch (error) {
-        
+    // Fetch the customer details by ID
+    try {
+      const response = await getCategoryCustomerById(id);
+      setCustomerName(response.data.clientName); // Pre-fill the customer name in the modal
+    } catch (error) {
+      console.error("Error fetching customer:", error);
+    }
+  };
+
+
+  const handleCreateOrEditCustomer = async (name: string) => {
+    try {
+      if (editingCustomerId) {
+        // If editing an existing customer, call the edit API
+        await editCategoryCustomer({ id: editingCustomerId, clientName: name });
+      } else {
+        // If creating a new customer, call the create API
+        await createCompanyCustomer({ clientName: name, type: "specificCustomer" });
       }
-      
-      
-    };
+      setIsOpen(false);
+      setCustomerName("");
+      setEditingCustomerId(null);
+    } catch (error) {
+      // Handle error (could be a toast notification or alert)
+      console.error("Error:", error);
+    }
+  };
   
 
-    const handleOpenModal = () => {
-      setIsOpen(true);
-    };
+    // const handleOpenModal = () => {
+    //   setIsOpen(true);
+    // };
 
     // action button cell
     const actionButtons = (props: CellContext<StoreItem, unknown>) => {
@@ -162,78 +189,78 @@ import {
       //   const { isActive } = props.row.original;
   
       return (
-        <div className="flex justify-end text-lg">
-       
-        
-        
-          
-
-       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "15px", marginTop: "10px" }}>
-  <Button
-    onClick={() => handleNavigate("/game", { userType: "specificCustomer", userId: _id, userName: clientName })}
-    block
-    variant="solid"
-    size="sm"
-    icon={<HiPlusCircle />}
-    style={{
-      backgroundColor: "#6a5acd",
-      color: "white",
-      padding: "8px 20px",
-      borderRadius: "6px",
-      fontSize: "14px",
-      cursor: "pointer",
-      transition: "all 0.3s ease",
-    }}
-    onMouseEnter={(e) => (e.target.style.backgroundColor = "#483d8b")}
-    onMouseLeave={(e) => (e.target.style.backgroundColor = "#6a5acd")}
-  >
-    Receiving
-  </Button>
-
-  <Button
-    onClick={() => handleNavigate("/tournament", { userType: "specificCustomer", userId: _id, userName: clientName })}
-    block
-    variant="solid"
-    size="sm"
-    icon={<HiPlusCircle />}
-    style={{
-      backgroundColor: "#6a5acd",
-      color: "white",
-      padding: "8px 20px",
-      borderRadius: "6px",
-      fontSize: "14px",
-      cursor: "pointer",
-      transition: "all 0.3s ease",
-    }}
-    onMouseEnter={(e) => (e.target.style.backgroundColor = "#483d8b")}
-    onMouseLeave={(e) => (e.target.style.backgroundColor = "#6a5acd")}
-  >
-    Consumer
-  </Button>
-
-  <Button
-    onClick={() => handleNavigate("/showbilling", { userType: "specificCustomer", userId: _id, userName: clientName })}
-    block
-    variant="solid"
-    size="sm"
-    icon={<HiPlusCircle />}
-    style={{
-      backgroundColor: "#6a5acd",
-      color: "white",
-      padding: "8px 20px",
-      borderRadius: "6px",
-      fontSize: "14px",
-      cursor: "pointer",
-      transition: "all 0.3s ease",
-    }}
-    onMouseEnter={(e) => (e.target.style.backgroundColor = "#483d8b")}
-    onMouseLeave={(e) => (e.target.style.backgroundColor = "#6a5acd")}
-  >
-    Billing
-  </Button>
-</div>
-
-          
+        <div className="flex flex-col items-end text-lg">
+          {/* Action Icons */}
+          <div className="flex gap-2">
+            {status === "pending" && (
+              <span
+                className={`cursor-pointer p-2 hover:${textTheme}`}
+                onClick={() => approved(status, _id)}
+              >
+                <HiEye />
+              </span>
+            )}
+             <span 
+        className="cursor-pointer p-2 hover:text-blue-500"
+        onClick={() => handleOpenModal(_id)} // Open modal with current name for editing
+      >
+        <HiOutlinePencil />
+      </span>
+            <span
+              className="cursor-pointer p-2 hover:text-red-500"
+              onClick={onDelete(_id)}
+            >
+              <HiOutlineTrash />
+            </span>
+          </div>
+    
+          {/* Buttons (Aligned and Styled) */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "15px",
+              marginTop: "10px",
+            }}
+          >
+            {[
+              { label: "Inventory", path: "/inventrylist" },
+              { label: "Billing", path: "/showbilling" },
+            ].map(({ label, path }) => (
+              <Button
+                key={label}
+                onClick={() =>
+                  handleNavigate(path, {
+                    userType: "specificCustomer",
+                    userId: _id,
+                    userName: clientName,
+                  })
+                }
+                block
+                variant="solid"
+                size="sm"
+                icon={<HiPlusCircle />}
+                style={{
+                  backgroundColor: "#6a5acd",
+                  color: "white",
+                  padding: "8px 20px",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#483d8b")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#6a5acd")
+                }
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
         </div>
       );
     };
@@ -274,19 +301,19 @@ import {
           </Dialog>
           <HeaderContent
             text="list of users"
-            addButtonText="Add Customer Data"
-            isModal={true}
-            onDialogOpen={handleOpenModal}
-            //addLink="/createtournament"
-            //onChangeDropDown={onChangeDropDown}
-            showSearch={false}
+             addButtonText1="CREATE USER"
+             isModal={true}
+             onDialogOpen={() => handleOpenModal("")}
+            // addLink="/createtournament"
+            //  onChangeDropDown={onChangeDropDown}
+             showSearch={true}
             //weightData={weightData}
-            onChangeMonth={onChangeMonth}
-            //selectedMonth={selectedMonth}
-            isMonthPicket={false}
+            // onChangeMonth={onChangeMonth}
+            // selectedMonth={selectedMonth}
+            // isMonthPicket={true}
             // dropDownSelectedValue={productType}
             // dropDownOptions={[{value: "poleythene", label: "Poleythene"},{value: "hydensity", label: "Hydensity"}]}
-           // onEditSearch={onEditSearch}
+             onEditSearch={onEditSearch}
           />
           <DataTable
             ref={tableRef}
@@ -310,11 +337,12 @@ import {
           onDeleteConfirm={onDeleteConfirm}
         />
 
-             <Confirmations
-                isOpen={isOpen}
-                onDialogClose={handleCloseModal} 
-                createCustomer={createCustomer}
-            />
+<Confirmations
+        isOpen={isOpen}
+        onDialogClose={handleCloseModal}
+        createCustomer={handleCreateOrEditCustomer}
+        customerName={customerName} // Pass customer name to Confirmations component
+      />
 
 
       </>

@@ -21,6 +21,7 @@ type FormFieldsName = {
   userId: string; 
   userType: string;
   phoneNumber: string;
+  ratio: string;
 };
 
 
@@ -53,6 +54,13 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
 
   }, [values.rate, values.grossWeight]);
 
+
+  useEffect(() => {
+  
+    setFieldValue("phoneNumber", values.clientName );
+
+  }, [values.clientName]);
+
   return (
     <AdaptableCard divider className="mb-4">
       <h5>{userName || "Sales"}</h5>
@@ -60,7 +68,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         <div className="col-span-1">
-          <FormItem
+          {/* <FormItem
             label="Date"
           >
             <Field
@@ -69,7 +77,21 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
               name="date"
               placeholder=""
               component={Input} />
-          </FormItem>
+          </FormItem> */}
+          <FormItem
+                  label="Date"
+                  //invalid={Boolean(errors.date && touched.date)}
+                  //errorMessage={errors.date}
+                  >
+                <DatePicker
+    selected={values.date ? new Date(values.date) : null}
+    onChange={(date: Date | null) => setFieldValue('date', date)}
+    dateFormat="dd/MM/yyyy"
+    placeholderText="dd/mm/yyyy"
+    className="w-full px-3 py-2 border rounded"
+    isClearable
+  />
+                </FormItem>
         </div>
 
         <div className="col-span-1">
@@ -210,7 +232,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
         </FormItem>
       </div>
 
-     {!userId && ( 
+{/*      
       <div className="col-span-1">
         <FormItem
           label="Phone Number"
@@ -224,11 +246,24 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
             component={Input} />
         </FormItem>
         </div> 
-        
-    
-     )} 
-        </div>  
-        <div className="col-span-1">
+         */}
+          
+       
+         <div className="col-span-1">
+        <FormItem
+          label="ratio"
+          
+        >
+          <Field
+            type="string"
+            autoComplete="off"
+            name="ratio"
+            placeholder="Enter ratio"
+            component={Input} />
+        </FormItem>
+        </div> 
+        </div> 
+     
         <FormItem
     label="product"
     invalid={Boolean(errors.product && touched.product)}
@@ -249,7 +284,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
       <option value="hydensity">Hydensity</option>
     </Field>
   </FormItem>
-              </div>
+              
 
     </AdaptableCard>
   )

@@ -51,8 +51,8 @@ export const protectedRoutes = [
   //   authority: [],
   // },
   {
-    key: `game`,
-    path: "/game",
+    key: `inventrylist`,
+    path: "/inventrylist",
     component: lazy(() => import("@/views/companypurchase/companypurchaselist")),
     authority: [],
   },
@@ -97,12 +97,12 @@ export const protectedRoutes = [
     component: lazy(() => import("@/views/Customer/CreateCustomer")),
     authority: [],
   },
-  {
-    key: "tournament",
-    path: `/tournament`,
-    component: lazy(() => import("@/views/Customer/Customerlist")),
-    authority: [],
-  },
+  // {
+  //   key: "tournament",
+  //   path: `/tournament`,
+  //   component: lazy(() => import("@/views/Customer/Customerlist")),
+  //   authority: [],
+  // },
   
   {
     key: "editTournament",

@@ -298,27 +298,25 @@ function _DataTable<T>(
                     />
                 ) : (
                     <TBody>
-                        {table
-                            .getRowModel()
-                            .rows.slice(0, pageSize)
-                            .map((row) => {
-                                return (
-                                    <Tr key={row.id}>
-                                        {row.getVisibleCells().map((cell) => {
-                                            return (
-                                                <Td key={cell.id}>
-                                                    {flexRender(
-                                                        cell.column.columnDef
-                                                            .cell,
-                                                        cell.getContext()
-                                                    )}
-                                                </Td>
-                                            )
-                                        })}
-                                    </Tr>
-                                )
-                            })}
-                    </TBody>
+  {table.getRowModel().rows.map((row) => {
+    const type = (row.original as any)?.type // cast for safety
+
+    const rowStyle = {
+      backgroundColor: type === 'purchase' ? '#f0faff' : type === 'sale' ? '#eafbea' : 'white',
+    }
+
+    return (
+      <Tr key={row.id} style={rowStyle}>
+        {row.getVisibleCells().map((cell) => (
+          <Td key={cell.id}>
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </Td>
+        ))}
+      </Tr>
+    )
+  })}
+</TBody>
+
                 )}
             </Table>
             <div className="flex items-center justify-between mt-4">
