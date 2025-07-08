@@ -18,7 +18,7 @@ import { apiUpdateSalesProduct } from "@/services/StoreServices";
 import { handleHttpReq } from "@/utils/HandleHttp";
 
 const Companypurchaseedit = () => {
-  const [productData, setProductData] = useState();
+  const [productData, setProductData] = useState({});
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -78,7 +78,12 @@ const Companypurchaseedit = () => {
         placement: "top-center",
       }
     );
-    navigate("/inventrylist");
+    if (productData?.userType === "specificCustomer") {
+      navigate("/inventrylist", { state: { userType: productData?.userType, userId: productData?.userId, userName: productData?.userName } });
+    } else {
+      navigate("/inventrylist");
+    }
+    //navigate("/inventrylist");
   };
 
   useEffect(() => {

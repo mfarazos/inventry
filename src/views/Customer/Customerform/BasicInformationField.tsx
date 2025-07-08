@@ -22,6 +22,7 @@ type FormFieldsName = {
   userType: string;
   phoneNumber: string;
   ratio: string;
+  additionalRate: boolean;
 };
 
 
@@ -284,6 +285,19 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
       <option value="hydensity">Hydensity</option>
     </Field>
   </FormItem>
+
+  <FormItem
+  label="Additional Rate"
+   invalid={Boolean(errors.additionalRate && touched.additionalRate)}
+   errorMessage={errors.additionalRate}
+>
+  <Field
+    type="checkbox"
+    name="additionalRate"
+    className="form-checkbox"
+  />
+</FormItem>
+
               
 
     </AdaptableCard>

@@ -252,6 +252,7 @@ import {
           accessorKey: "ratio",
         },
 
+
         // {
         //   header: "Weight Pure",
         //   accessorKey: "weightPure",

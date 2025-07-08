@@ -300,10 +300,29 @@ function _DataTable<T>(
                     <TBody>
   {table.getRowModel().rows.map((row) => {
     const type = (row.original as any)?.type // cast for safety
+     const additionalRate = (row.original as any)?.additionalRate // cast for safety
 
-    const rowStyle = {
-      backgroundColor: type === 'purchase' ? '#f0faff' : type === 'sale' ? '#eafbea' : 'white',
+   let rowStyle = {
+    backgroundColor: 'white', // default
+  };
+
+  if (type) {
+    // Company Purchase Page logic
+    if (type === 'purchase') {
+      rowStyle.backgroundColor = '#f0faff';
+    } else if (type === 'sale') {
+      rowStyle.backgroundColor = '#eafbea';
     }
+  } else {
+    // Billing Page logic
+    if (additionalRate === true) {
+      rowStyle.backgroundColor = '#f0faff';
+    } else if (additionalRate === false) {
+      rowStyle.backgroundColor = '#eafbea';
+    } else {
+      rowStyle.backgroundColor = 'white';
+    }
+  }
 
     return (
       <Tr key={row.id} style={rowStyle}>

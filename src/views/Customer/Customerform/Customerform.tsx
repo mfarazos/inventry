@@ -91,6 +91,7 @@ const CustomerForm = forwardRef<FormikRef, clientForm>((props, ref) => {
       amount: 0,
       billNo: '',
       product: '',
+      additionalRate: false,
       userId: userId || null,
       userType: userType || 'walkingCustomer',
       phoneNumber: '',

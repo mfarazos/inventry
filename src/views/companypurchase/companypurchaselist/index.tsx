@@ -253,7 +253,7 @@ import {
     };
   
     // columns
-    const columns: ColumnDef<StoreItem>[] = useMemo(
+const columns: ColumnDef<StoreItem>[] = useMemo(
   () => [
     {
       header: "Date",
@@ -290,18 +290,18 @@ import {
       },
     },
 
-    //
-    ...(userName ? [
-      {
-        header: "tafree",
-        accessorKey: "clientName",
-        cell: (props) => {
-          const { clientName, type } = props.row.original;
-          return type === "sale" ? <span>{clientName}</span> : <span>-</span>;
-        },
-      },
-    ] : []),
-    //
+    // //
+    // ...(userName ? [
+    //   {
+    //     header: "tafree",
+    //     accessorKey: "clientName",
+    //     cell: (props) => {
+    //       const { clientName, type } = props.row.original;
+    //       return type === "sale" ? <span>{clientName}</span> : <span>-</span>;
+    //     },
+    //   },
+    // ] : []),
+    // //
     // === Purchase Side Columns ===
     {
       header: "Received From",
@@ -418,16 +418,16 @@ import {
       id: "action",
       cell: (props) => {
         const row = props.row.original;
-        const bgColor = row.type === "purchase" ? "#e0f7fa" : "#e8f5e9"; // Light blue vs light green
+        //const bgColor = row.type === "purchase" ? "#e0f7fa" : "#e8f5e9"; // Light blue vs light green
         return (
-          <div style={{ backgroundColor: bgColor, padding: "8px", borderRadius: "8px" }}>
+          <div style={{  padding: "8px", borderRadius: "8px" }}>
             {actionButtons(props)}
           </div>
         );
       },
     },
-  ],
-  []
+ ],
+  
 
   
 );

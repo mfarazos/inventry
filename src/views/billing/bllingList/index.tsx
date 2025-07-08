@@ -9,38 +9,41 @@ import useThemeClass from "@/utils/hooks/useThemeClass";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   HiEye,
-  HiLockClosed,
-  HiLockOpen,
   HiOutlinePencil,
   HiOutlineTrash,
 } from "react-icons/hi";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { StoreItem } from "@/@types/store";
+import { StoreItem } from "@/@types/store"; // Adjust path if necessary
 import useListApi from "@/utils/hooks/useListApi";
 import HeaderContent from "@/components/shared/HeaderContent";
 import {
   deleteCustomers,
   deleteGameMode,
   getCustomerdetails,
-  upadateByStatusCustomer
+  upadateByStatusCustomer,
+  // Add your new update API service here
+  // For example:
+   editCustomerBilling // <-- Naya import: Ye aapko GameManagement.ts mein banani hogi
 } from "@/services/GameManagement";
 import CustomConfirmDialog from "@/components/shared/CustomConfirmDialog";
-import { storeItemTypesOptions } from "@/configs/dropdown.config";
-import { Avatar, Dialog } from "@/components/ui";
-import { FaLock, FaLockOpen, FaUnlockAlt } from "react-icons/fa";
+import { Dialog } from "@/components/ui"; // Dialog component for modal
 import Swal from "sweetalert2";
-import { handleHttpReq } from "@/utils/HandleHttp";
+// import { handleHttpReq } from "@/utils/HandleHttp"; // Not used in provided snippet
+
+// Naya component import karein
+import EditBillingForm from './editbilling/EditBillingForm'; // <-- Path adjust karein jahan aap EditBillingForm.tsx rakhenge
 
 function CustomerList() {
   // theme and navigation hook
   const { textTheme } = useThemeClass();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userType, userId, userName , phoneNumber } = location.state || {};
+  const { userType, userId, userName, phoneNumber } = location.state || {};
   console.log(userType, userId, userName, phoneNumber);
-  // api hook
+
+  // API hook
   const listUrl = getCustomerdetails();
-  const deleteUrl = deleteGameMode();
+  const deleteUrl = deleteGameMode(); // Not directly used for item deletion in this component, but passed to useListApi
   const {
     pageIndex,
     pageSize,
@@ -56,9 +59,9 @@ function CustomerList() {
     onEditSearch,
     onDeleteDialogClose,
     onDeleteConfirm,
-    handleDeleteClick,
+    handleDeleteClick, // This is from useListApi, we will use our own onDelete for more control
     filter,
-    setData,
+    setData, // <-- Important: Ye data ko update karne ke liye use hoga
     setFilter,
   } = useListApi<any>(listUrl, deleteUrl, 10);
 
@@ -68,6 +71,12 @@ function CustomerList() {
   const [selectedImg, setSelectedImg] = useState<string>({} as string);
   const [productType, setProductType] = useState("poleythene");
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+
+  // --- NAYI STATES FOR EDIT MODAL ---
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentEditingItem, setCurrentEditingItem] = useState<any | null>(null);
+  // --- NAYI STATES END ---
+
 
   useEffect(() => {
     if (userId && userType) {
@@ -85,7 +94,7 @@ function CustomerList() {
         phoneNumber: phoneNumber
       });
     }
-  }, [productType, selectedMonth,]);
+  }, [productType, selectedMonth, userId, userType, phoneNumber,]); // Dependencies add kiye
 
   const onViewOpen = (img: string) => {
     setSelectedImg(img);
@@ -97,53 +106,59 @@ function CustomerList() {
       setSelectedImg({} as string);
     }, 300);
   };
-  // on edit item
+
+  // --- handleEditClick FUNCTION MEIN CHANGE ---
   const handleEditClick = useCallback(
-    (id: string) => () => {
-      console.log(`item selected`, id);
-      navigate(`/editTournament/${id}`);
+    (item: any) => () => { // Ab poora item receive karega
+      console.log(`item selected for edit`, item);
+      setCurrentEditingItem(item); // Current item ko store kiya
+      setIsEditModalOpen(true); // Modal ko open kiya
     },
     []
   );
+  // --- handleEditClick FUNCTION END ---
 
-  const approved =  useCallback(
+  const approved = useCallback(
     (status: boolean, id: string) => async () => {
       console.log(status);
 
       const abc = await Swal.fire({
         title: "Warning !",
-        text: `are shure you want to Approved?`,
+        text: `Are you sure you want to Approved?`,
         icon: "warning",
-        confirmButtonText: "yes",
+        confirmButtonText: "Yes",
       });
       if (abc.isConfirmed) {
         try {
           const updateStatus = await upadateByStatusCustomer(id);
-          if(updateStatus){
+          if (updateStatus) {
             const isStatus = "approved";
-          setData((prev) =>
-            prev.map((user) =>
-              user._id === id ? { ...user, status: isStatus } : user
-            )
-          );
-
-          return isStatus;
+            setData((prev) =>
+              prev.map((user) =>
+                user._id === id ? { ...user, status: isStatus } : user
+              )
+            );
+            Swal.fire("Approved!", "The entry has been approved.", "success");
+            return isStatus;
           }
-          
-        } catch (error) {}
-    
-      }
-      
-    },[]);
 
- 
-  // set filter
+        } catch (error) {
+          console.error("Error approving item:", error);
+          Swal.fire("Error!", "An error occurred during approval.", "error");
+        }
+
+      }
+
+    }, []);
+
+
+  // set filter for dropdown (product type)
   const onChangeDropDown = (itemSelected: string) => {
     console.log("faraz1", itemSelected)
     setProductType(itemSelected);
   };
 
-  // set filter
+  // set filter for month
   const onChangeMonth = (itemSelected: string) => {
     console.log("faraz1", itemSelected)
     setSelectedMonth(itemSelected);
@@ -151,51 +166,70 @@ function CustomerList() {
 
   const onDelete = useCallback(
     (id: string) => async () => {
-      // console.log(`item selected`, id);
-      // navigate(`/editGameMode/${id}`);
       const abc = await Swal.fire({
         title: "Warning !",
-        text: `are shure you want to delete?`,
+        text: `Are you sure you want to delete?`,
         icon: "warning",
-        confirmButtonText: "yes",
+        confirmButtonText: "Yes",
       });
       if (abc.isConfirmed) {
         try {
-          const result = await deleteCustomers(id);
-          
-        setData((prev) => prev.filter((user) => user._id !== id));
+          // Assuming deleteCustomers returns a success indicator or throws error
+          await deleteCustomers(id); // API call to delete
+          setData((prev) => prev.filter((user) => user._id !== id)); // UI se item remove kiya
+          Swal.fire("Deleted!", "The entry has been deleted.", "success");
         } catch (error) {
-          
+          console.error("Error deleting item:", error);
+          Swal.fire("Error!", "An error occurred during deletion.", "error");
         }
-        
       }
-
-      // console.log("SELECTED ITEM DELETE", result);
-      // setData(result.data?.data);
     },
     []
   );
 
- 
+  // --- NAYA FUNCTION: JAB MODAL SE DATA SAVE HOGA ---
+  const handleSaveEditedItem = async (updatedItem: any) => {
+  try {
+    const response = await editCustomerBilling(updatedItem);
+    
+     const responseData = response.data as { message?: string, success?: boolean }; // <-- Yahan change kiya
 
- 
+    if (response.status === 200 || responseData.success) { // Ab responseData use karein
+      setData((prevData: any[]) =>
+        prevData.map((item) =>
+          item._id === updatedItem._id ? updatedItem : item
+        )
+      );
+      setIsEditModalOpen(false);
+      Swal.fire("Success!", "Entry updated successfully.", "success");
+    } else {
+      Swal.fire("Error!", responseData.message || "Failed to update entry.", "error"); // Ab responseData use karein
+    }
+  } catch (error) {
+    console.error("Error updating item:", error);
+    Swal.fire("Error!", "An error occurred while updating.", "error");
+  }
+};
+  // --- NAYA FUNCTION END ---
 
-  // action button cell
+
+  // action button cell (Change `onClick` for pencil icon)
   const actionButtons = (props: CellContext<StoreItem, unknown>) => {
     const { _id, status } = props.row.original;
-    //   const { isActive } = props.row.original;
 
     return (
       <div className="flex justify-end text-lg">
-        {status == "pending" && (<span
+        {status === "pending" && (
+          <span
             className={`cursor-pointer p-2 hover:${textTheme}`}
-            onClick={approved(status, _id)}
+            onClick={approved(status === "pending", _id)} // status prop is boolean here
           >
             <HiEye />
-          </span>)}
+          </span>
+        )}
         <span
           className={`cursor-pointer p-2 hover:${textTheme}`}
-          onClick={handleEditClick(_id)}
+          onClick={handleEditClick(props.row.original)} // <-- YAHAN CHANGE HUA HAI: Ab poora item bhej rahe hain
         >
           <HiOutlinePencil />
         </span>
@@ -205,18 +239,6 @@ function CustomerList() {
         >
           <HiOutlineTrash />
         </span>
-        {/* <span
-            className="cursor-pointer p-2 hover:text-red-500"
-            onClick={handleDeleteClick(_id)}
-          >
-            <HiOutlineTrash />
-          </span> */}
-        {/* <span
-            className="cursor-pointer p-2 hover:text-red-500"
-            onClick={handleBan(_id, isActive)}
-          >
-            {isActive ? <HiLockOpen /> : <HiLockClosed />}
-          </span> */}
       </div>
     );
   };
@@ -230,10 +252,9 @@ function CustomerList() {
         cell: (props) => {
           const { date } = props.row.original;
           let dateOne = new Date(date).toISOString().slice(0, 10)
-          return <span>{new Date(dateOne).toLocaleDateString()}</span>; // Extracts "YYYY-MM-DD"
+          return <span>{new Date(dateOne).toLocaleDateString()}</span>;
         },
       },
-      
       {
         header: "quality",
         accessorKey: "quality",
@@ -242,39 +263,43 @@ function CustomerList() {
         header: "DC Number",
         accessorKey: "dcNumber",
       },
-
-
-   
-     
-
+      {
+        header: "Total Weight",
+        accessorKey: "grossWeight",
+      },
       {
         header: "Rate",
         accessorKey: "rate",
       },
-
-
       {
         header: "Amount",
         accessorKey: "amount",
       },
-
-      
-   
-      
-     
-
-     
-      
-      
-
+      {
+        header: "Action",
+        id: "action",
+        cell: (props) => {
+          // const row = props.row.original; // Not needed directly here
+          return (
+            <div style={{ padding: "8px", borderRadius: "8px" }}>
+              {actionButtons(props)}
+            </div>
+          );
+        },
+      },
     ],
-    []
+    [actionButtons] // actionButtons ko dependency array mein add kiya
   );
+
+
+  // Determine if weightData should be passed
+  const shouldShowWeightData = userType && userId && userType !== 'walkingCustomer';
 
   // main view
   return (
     <>
       <AdaptableCard className="h-full" bodyClass="h-full">
+        {/* EXISTING IMAGE VIEW DIALOG - ISKO NAHI CHHERNA */}
         <Dialog
           isOpen={viewOpen}
           onClose={onDialogClose}
@@ -286,21 +311,33 @@ function CustomerList() {
             alt={"abc"}
           />
         </Dialog>
+
+        {/* --- NAYA EDIT MODAL DIALOG --- */}
+        <Dialog
+          isOpen={isEditModalOpen} // isEditModalOpen state se control hoga
+          onClose={() => setIsEditModalOpen(false)} // Cross button ya bahar click karne par band hoga
+          onRequestClose={() => setIsEditModalOpen(false)}
+           // Modal ka title
+        >
+          {/* Jab currentEditingItem mein data hoga, tabhi EditBillingForm dikhayenge */}
+          {currentEditingItem && (
+            <EditBillingForm
+              item={currentEditingItem} // Woh item jisko edit karna hai
+               onSave={handleSaveEditedItem} // Jab form save hoga to ye function call hoga
+              onCancel={() => setIsEditModalOpen(false)} // Jab form cancel hoga to modal band hoga
+            />
+          )}
+        </Dialog>
+        {/* --- NAYA EDIT MODAL DIALOG END --- */}
+
         <HeaderContent
-          text={userName? userName + " " + "Billing" : "Sales"}
-          //addButtonText="Add Customer Data"
-         // addLink="/createtournament"
-          state = {{userType: userType || "walkingCustomer", userId: userId || null, userName: userName || null, phoneNumber: phoneNumber || ""}}
-        //  onChangeDropDown={onChangeDropDown}
-        //  showSearch={true}
-        //  weightData={weightData}
+          text={userName ? userName + " " + "Billing" : "Sales"}
+          state={{ userType: userType || "walkingCustomer", userId: userId || null, userName: userName || null, phoneNumber: phoneNumber || "" }}
+          {...(shouldShowWeightData && { weightData })}
           billData={billData}
           onChangeMonth={onChangeMonth}
           selectedMonth={selectedMonth}
           isMonthPicket={true}
-        //  dropDownSelectedValue={productType}
-        //  dropDownOptions={[{value: "poleythene", label: "Poleythene"},{value: "hydensity", label: "Hydensity"}]}
-         // onEditSearch={onEditSearch}
         />
         <DataTable
           ref={tableRef}

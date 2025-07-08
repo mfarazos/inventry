@@ -99,6 +99,8 @@ export async function editGameMode<T>(id: string) {
   });
 }
 
+
+
 export async function createGameMode<T>(data: any) {
   return ApiService.fetchData<T>({
     url: `/inventoryApp/Creatematerial`,
@@ -138,4 +140,11 @@ export async function deleteCategoryCustomer<T>(id: string) {
 
 export function deleteGameMode() {
   return "/adminGame/deleteGameMode";
+}
+export async function editCustomerBilling<T>(data: any) {
+    return ApiService.fetchData<T>({
+        url: "/inventoryApp/editCustomer",
+        method: "patch",
+        data: data, 
+    });
 }

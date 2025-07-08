@@ -99,7 +99,7 @@ const HeaderContent = (props: HeaderContentProps) => {
                 }),
               }}
             />
-          ) : null}
+          ) : null} 
   
           {isMonthPicket ? (
             <input
@@ -267,23 +267,61 @@ const HeaderContent = (props: HeaderContentProps) => {
         </>
       )}
   
-      {billData && (
-        <>
-          <div className="lg:flex items-center justify-between mb-4">
-            <div className="flex flex-col lg:flex-row lg:items-center space-x-3">
-              <label className="block text-sm font-medium text-gray-700">
-                Bill number:
-              </label>
-              <input
-                type="text"
-                value={billData?.[0] || 0} // Here, we're using the first element of the billData array
-                readOnly
-                className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
-              />
-            </div>
+      {billData && billData.length > 0 && (
+  <div>
+    {billData.map((bill, index) => (
+      <div key={index} className="mb-4 border p-4 rounded-md">
+        <div className="lg:flex items-center justify-between mb-2">
+          <div className="flex flex-col lg:flex-row lg:items-center space-x-3 mb-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Bill number:
+            </label>
+            <input
+              type="text"
+              value={bill.billNo}
+              readOnly
+              className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+            />
           </div>
-        </>
-      )}
+          <div className="flex flex-col lg:flex-row lg:items-center space-x-3 mb-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Total Amount:
+            </label>
+            <input
+              type="text"
+              value={bill.totalAmount}
+              readOnly
+              className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+            />
+          </div>
+          <div className="flex flex-col lg:flex-row lg:items-center space-x-3 mb-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Weight:
+            </label>
+            <input
+              type="text"
+              value={bill.totalgrossWeight}
+              readOnly
+              className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+            />
+          </div>
+          <div className="flex flex-col lg:flex-row lg:items-center space-x-3">
+            <label className="block text-sm font-medium text-gray-700">
+              Total Rate:
+            </label>
+            <input
+              type="text"
+              value={bill.totalRate}
+              readOnly
+              className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+            />
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
     </>
   );
 } 

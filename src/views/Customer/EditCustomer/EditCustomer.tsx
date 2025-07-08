@@ -76,7 +76,12 @@ const EditCustomer = () => {
         placement: "top-center",
       }
     );
-    navigate("/inventrylist");
+    if (productData?.userType === "specificCustomer") {
+      navigate("/inventrylist", { state: { userType: productData?.userType, userId: productData?.userId, userName: productData?.userName } });
+    } else {
+      navigate("/inventrylist");
+    }
+   // navigate("/inventrylist");
   };
 
   useEffect(() => {
