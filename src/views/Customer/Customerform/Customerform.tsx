@@ -60,11 +60,14 @@ const validationSchema = Yup.object().shape({
   clientName: Yup.string().required("Client Name is required"),
   quality: Yup.string().required("Quality is required"),
   dcNumber: Yup.string().required("DC Number is required"),
+  billNo: Yup.string().required("Bill Number is required"),
+  
   weightPure: Yup.number().required("Weight Pure is required"),
   weightMixing: Yup.number().required("Weight Mixing is required"),
   grossWeight: Yup.number().required("Gross Weight is required"),
   rate: Yup.number().required("Rate is required"),
   amount: Yup.number().required("Amount is required"),
+  totalAmount: Yup.number().required("Amount is required"),
   product: Yup.string().required("Product is required"),
 });
 
@@ -89,6 +92,9 @@ const CustomerForm = forwardRef<FormikRef, clientForm>((props, ref) => {
       grossWeight: 0,
       rate: 0,
       amount: 0,
+      extraRate: 0,
+      extraAmount: 0,
+      totalAmount: 0,
       billNo: '',
       product: '',
       additionalRate: false,

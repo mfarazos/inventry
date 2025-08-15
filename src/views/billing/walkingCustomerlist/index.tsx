@@ -216,7 +216,7 @@ import {
             />
           </Dialog>
           <HeaderContent
-            text="list of users"
+            text="Walking Customers"
             //addButtonText="Add Customer Data"
             //isModal={true}
             //onDialogOpen={handleOpenModal}

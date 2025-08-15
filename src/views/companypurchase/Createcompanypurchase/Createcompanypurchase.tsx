@@ -51,9 +51,9 @@ import Companypurchaseform, {
             }
           );
           if (userType === "specificCustomer") {
-            navigate("/inventrylist", { state: { userType: "specificCustomer", userId: userId, userName: userName } });
+            navigate(`/inventrylist?productMaterialType=${values?.product}&selectedMonthByParams=${values?.date}`, { state: { userType: "specificCustomer", userId: userId, userName: userName } });
           } else {
-            navigate("/inventrylist");
+            navigate(`/inventrylist?productMaterialType=${values?.product}&selectedMonthByParams=${values?.date}`);
           }
           
            

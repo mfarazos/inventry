@@ -27,9 +27,16 @@ const EditBillingForm: React.FC<EditBillingFormProps> = ({ item, onSave, onCance
             weightPure: parseFloat(item.weightPure) || 0,
             weightMixing: parseFloat(item.weightMixing) || 0,
             rate: parseFloat(item.rate) || 0,
+            extraRate:parseFloat(item.extraRate) || 0,
+
             // GrossWeight aur Amount ki initial calculation ensure karein
             grossWeight: (parseFloat(item.weightPure) || 0) + (parseFloat(item.weightMixing) || 0),
-            amount: ((parseFloat(item.weightPure) || 0) + (parseFloat(item.weightMixing) || 0)) * (parseFloat(item.rate) || 0),
+            extraAmount: ((parseFloat(item.weightPure) || 0) + (parseFloat(item.weightMixing) || 0)) * (parseFloat(item.rate) || 0), 
+            amount: ((parseFloat(item.weightPure) || 0) + (parseFloat(item.weightMixing) || 0)) * (parseFloat(item.extraRate) || 0),
+            totalAmount:
+            (((parseFloat(item.weightPure) || 0) + (parseFloat(item.weightMixing) || 0)) * (parseFloat(item.rate) || 0)) +
+            (((parseFloat(item.weightPure) || 0) + (parseFloat(item.weightMixing) || 0)) * (parseFloat(item.extraRate) || 0)),
+
         });
     }, [item]);
 
@@ -58,6 +65,8 @@ const EditBillingForm: React.FC<EditBillingFormProps> = ({ item, onSave, onCance
         const pure = parseFloat(formData.weightPure) || 0;
         const mixing = parseFloat(formData.weightMixing) || 0;
         const currentRate = parseFloat(formData.rate) || 0;
+        const extraRate = parseFloat(formData.extraRate) || 0;
+        
 
         // Calculate grossWeight
         const calculatedGrossWeight = pure + mixing;
@@ -65,18 +74,25 @@ const EditBillingForm: React.FC<EditBillingFormProps> = ({ item, onSave, onCance
         // Calculate amount
         const calculatedAmount = calculatedGrossWeight * currentRate;
 
+      const extraAmount = calculatedGrossWeight * extraRate;
+
+      const totalAmount = extraAmount + calculatedAmount
+
         setFormData(prevFormData => {
             // Sirf tab update karein jab values actual mein change hon
-            if (prevFormData.grossWeight !== calculatedGrossWeight || prevFormData.amount !== calculatedAmount) {
+            if (prevFormData.grossWeight !== calculatedGrossWeight || prevFormData.amount !== calculatedAmount || prevFormData.extraAmount !== extraAmount || prevFormData.totalAmount !== totalAmount) {
                 return {
                     ...prevFormData,
                     grossWeight: calculatedGrossWeight,
                     amount: calculatedAmount,
+                    extraAmount: extraAmount,
+                    totalAmount: totalAmount
+
                 };
             }
             return prevFormData; // Koi change nahi hua to state update na karein
         });
-    }, [formData.weightPure, formData.weightMixing, formData.rate]); // Dependencies jin par calculation depend karti hai
+    }, [formData.weightPure, formData.weightMixing, formData.rate, formData.extraRate ]); // Dependencies jin par calculation depend karti hai
     // --- USEEFFECT END ---
 
     // Form submit hone par
@@ -139,6 +155,41 @@ const EditBillingForm: React.FC<EditBillingFormProps> = ({ item, onSave, onCance
                         className="mt-1 block w-full bg-gray-100 cursor-not-allowed" // Styling for disabled
                     />
                 </div>
+
+            <div>
+                    <label className="block text-sm font-medium text-gray-700">Rate</label>
+                    <Input
+                        name="extraRate"
+                        value={formData.extraRate || ''}
+                        onChange={handleChange}
+                        type="number"
+                        className="mt-1 block w-full"
+                    />
+                </div>
+
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">extra amount</label>
+                    <Input
+                        name="extraAmount"
+                        value={formData.extraAmount || ''}
+                        readOnly // Make it read-only
+                        className="mt-1 block w-full bg-gray-100 cursor-not-allowed" // Styling for disabled
+                    />
+                </div>
+
+                 <div>
+                    <label className="block text-sm font-medium text-gray-700">total amount</label>
+                    <Input
+                        name="totalAmount"
+                        value={formData.totalAmount || ''}
+                        readOnly // Make it read-only
+                        className="mt-1 block w-full bg-gray-100 cursor-not-allowed" // Styling for disabled
+                    />
+                </div>
+
+
+
             </div>
 
             {/* Buttons */}

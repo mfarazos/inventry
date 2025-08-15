@@ -6,7 +6,7 @@ export function showNotificationMessage(
     title: string,
     message: string,
     notificationType: TypeAttributes.Status = 'success',
-    duration: number = 2500,
+    duration: number = 6500,
 ) {
     toast.push(
         <Notification title={title} type={notificationType} duration={duration}>

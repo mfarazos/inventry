@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { ChangeEvent } from "react";
 
 type HeaderContentProps = {
-  text: string;
+  text: string | JSX.Element;
   addButtonText1?: string;
   addLink1?: string;
   addButtonText2?: string;
@@ -266,61 +266,181 @@ const HeaderContent = (props: HeaderContentProps) => {
           </div> */}
         </>
       )}
-  
-      {billData && billData.length > 0 && (
+{billData && billData.length > 0 && (
   <div>
     {billData.map((bill, index) => (
       <div key={index} className="mb-4 border p-4 rounded-md">
-        <div className="lg:flex items-center justify-between mb-2">
-          <div className="flex flex-col lg:flex-row lg:items-center space-x-3 mb-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Bill number:
-            </label>
-            <input
-              type="text"
-              value={bill.billNo}
-              readOnly
-              className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
-            />
-          </div>
-          <div className="flex flex-col lg:flex-row lg:items-center space-x-3 mb-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Total Amount:
-            </label>
-            <input
-              type="text"
-              value={bill.totalAmount}
-              readOnly
-              className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
-            />
-          </div>
-          <div className="flex flex-col lg:flex-row lg:items-center space-x-3 mb-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Weight:
-            </label>
-            <input
-              type="text"
-              value={bill.totalgrossWeight}
-              readOnly
-              className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
-            />
-          </div>
-          <div className="flex flex-col lg:flex-row lg:items-center space-x-3">
-            <label className="block text-sm font-medium text-gray-700">
-              Total Rate:
-            </label>
-            <input
-              type="text"
-              value={bill.totalRate}
-              readOnly
-              className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
-            />
-          </div>
+        {/* First Row */}
+        <div className="mt-4">
+
+    <div className="lg:flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center space-x-3 w-full">
+        {/* Column 1 */}
+        <div className="flex flex-col mb-2 w-full max-w-[200px]">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+           Weight
+          </label>
+          <input
+            type="text"
+            value={(bill.totalgrossWeight || 0).toFixed(2)}
+            readOnly
+            className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+          />
         </div>
+
+        {/* Column 2 */}
+        <div className="flex flex-col mb-2 w-full max-w-[200px]">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Rate
+          </label>
+          <input
+            type="text"
+            value={(bill.totalRate || 0).toFixed(2)}
+            readOnly
+            className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+          />
+        </div>
+
+        {/* Column 3 */}
+        <div className="flex flex-col mb-2 w-full max-w-[200px]">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Amount
+          </label>
+          <input
+            type="text"
+            value={(bill.totalAmount || 0).toFixed(2)}
+            readOnly
+            className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+          />
+        </div>
+
+        {/* Column 4 */}
+        <div className="flex flex-col mb-2 w-full max-w-[200px]">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Bill Number
+          </label>
+          <input
+            type="text"
+            value={(bill.billNo || 0)}
+            readOnly
+            className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+        {/* Second Row: Dana Excess From N/P Calpret */}
+        {(bill.grossWeightCompany || bill.rateCompany || bill.amountCompany) && (
+          <div className="mt-4">
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              Dana Excess From N/P Calpret:
+            </label>
+
+            <div className="lg:flex items-center justify-between">
+              <div className="flex flex-col lg:flex-row lg:items-center space-x-3 w-full">
+                {/* Company Weight */}
+                <div className="flex flex-col mb-2 w-full max-w-[200px]">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Company Weight
+                  </label>
+                  <input
+                    type="text"
+                    value={(bill.grossWeightCompany || 0).toFixed(2)}
+                    readOnly
+                    className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+                  />
+                </div>
+
+                {/* Company Rate */}
+                <div className="flex flex-col mb-2 w-full max-w-[200px]">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Company Rate
+                  </label>
+                  <input
+                    type="text"
+                    value={(bill.rateCompany || 0).toFixed(2)}
+                    readOnly
+                    className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+                  />
+                </div>
+
+                {/* Company Amount */}
+                <div className="flex flex-col mb-2 w-full max-w-[200px]">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Company Amount
+                  </label>
+                  <input
+                    type="text"
+                    value={(bill.amountCompany || 0).toFixed(2)}
+                    readOnly
+                    className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Third Row: After Adding Company Weight and Rate */}
+        {(bill.grossWeightCompany || bill.rateCompany || bill.amountCompany) && (
+          <div className="mt-6">
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              After Adding Company Weight and Rate:
+            </label>
+
+            <div className="lg:flex items-center justify-between">
+              <div className="flex flex-col lg:flex-row lg:items-center space-x-3 w-full">
+                {/* Total Weight */}
+                <div className="flex flex-col mb-2 w-full max-w-[200px]">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Total Weight
+                  </label>
+                  <input
+                    type="text"
+                    value={((bill.totalgrossWeight || 0) + (bill.grossWeightCompany || 0)).toFixed(2)}
+                    readOnly
+                    className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+                  />
+                </div>
+
+                {/* Total Rate */}
+                <div className="flex flex-col mb-2 w-full max-w-[200px]">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Total Rate
+                  </label>
+                  <input
+                    type="text"
+                    value={((bill.totalRate || 0) + (bill.rateCompany || 0)).toFixed(2)}
+                    readOnly
+                    className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+                  />
+                </div>
+
+                {/* Total Amount */}
+                <div className="flex flex-col mb-2 w-full max-w-[200px]">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Total Amount
+                  </label>
+                  <input
+                    type="text"
+                    value={((bill.totalAmount || 0) + (bill.amountCompany || 0)).toFixed(2)}
+                    readOnly
+                    className="border border-gray-500 rounded-md px-3 py-2 text-gray-800"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     ))}
   </div>
 )}
+
+
 
     </>
   );

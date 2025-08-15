@@ -1,0 +1,50 @@
+/* Yeh styles sirf PDF generation ke liye hain. Inka asar screen par nahi padega. */
+@media print {
+  /* Poore page ke content ko temporarily hide karein. */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Sirf 'print-container' aur uske andar ke elements ko visible rakhein. */
+  #print-container, #print-container * {
+    visibility: visible;
+  }
+  
+  /* 'print-container' ko page ke top-left corner par position karein. */
+  #print-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 20mm; /* A4 page ke liye 20mm ka margin set karein. */
+    width: 100%;
+    box-sizing: border-box; /* Padding ko total width mein shamil karein. */
+  }
+
+  /* Header content ke neeche space dein. */
+  .header-content {
+    margin-bottom: 15mm;
+  }
+  
+  /* Table ko proper formatting dein. */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .data-table th, .data-table td {
+    border: 1px solid #ccc; /* Table ke cells ke liye border. */
+    padding: 8px; /* Cell ke andar padding. */
+    text-align: left;
+    font-size: 10px; /* Font size chhota karein taki data fit ho sake. */
+  }
+
+  /* 'Action' column ko PDF se hide karein. */
+  .data-table .action-column {
+    display: none;
+  }
+
+  /* 'Download PDF' button ko print view se hide karein. */
+  .p-4.text-right {
+    display: none;
+  }
+}

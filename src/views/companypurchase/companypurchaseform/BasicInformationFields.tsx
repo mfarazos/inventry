@@ -26,6 +26,8 @@ type FormFieldsName = {
   userId: string; 
   userType: string;
   phoneNumber: string;
+  rate: number;
+  isNorani: boolean
 };
 
 type BasicInformationFieldsProps = {
@@ -61,7 +63,10 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
   
   return (
     <AdaptableCard divider className="mb-4">
-      <h5>{userName || "purchase"}</h5>
+      <h5
+>
+  {userName || "Purchase"}
+</h5>
       <p className="mb-6">Section to config basic product information</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       
@@ -216,7 +221,25 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
 
      
       </div>
+
+       <div className="col-span-1">
+      <FormItem
+       label="Rate"
+       invalid={(errors.rate&& touched.rate) as boolean}
+       errorMessage={errors.rate}
+     >
+       <Field
+         type="number"
+         autoComplete="off"
+         name="rate"
+         placeholder="rate"
+         component={Input}
+       />
+      </FormItem>
+
+     
       </div>
+      
 
     
       <div className="col-span-1">
@@ -263,8 +286,48 @@ errorMessage={errors.quality}
         </Field>
       </FormItem>
       </div>
+    
+<FormItem
+  label="Is Norani Traders?"
+  invalid={(errors.isNorani && touched.isNorani) as boolean}
+  errorMessage={errors.isNorani}
+>
+  <label
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      padding: '10px',
+      border: '1px solid #ccc',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      backgroundColor: 'white', // always white
+    }}
+  >
+    <Field
+      type="checkbox"
+      name="isNorani"
+      
+      style={{
+        width: '18px',
+        height: '18px',
+        cursor: 'pointer',
+        accentColor: '#007bff', // blue color when checked
+      }}
+    />
+
+  </label>
+</FormItem>
 
 
+
+
+  
+
+
+
+
+</div>
     </AdaptableCard>
   );
 };

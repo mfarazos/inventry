@@ -13,7 +13,7 @@ type FilterType = {
 function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: number) {
   //state
   const [pageIndex, setPageIndex] = useState(1);
-  const [pageSize, setPageSize] = useState(desirePageSize || 10);
+  const [pageSize, setPageSize] = useState(desirePageSize || 100);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState("");

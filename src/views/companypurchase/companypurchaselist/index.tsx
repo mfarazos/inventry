@@ -7,6 +7,7 @@ import {
   } from "@/components/shared";
   import useThemeClass from "@/utils/hooks/useThemeClass";
   import { useLocation, useNavigate } from "react-router-dom";
+  import { useSearchParams } from "react-router-dom";
   import {
     HiEye,
     HiLockClosed,
@@ -39,9 +40,12 @@ import {
     const navigate = useNavigate();
 
     const location = useLocation();
-    const { userType, userId, userName } = location.state || {};
-    console.log(userType, userId, userName);
-  
+    const { userType, userId, userName  } = location.state || {};
+     let [searchParams] = useSearchParams();
+  const productMaterialType     = searchParams.get("productMaterialType");
+  const selectedMonthByParams   = searchParams.get("selectedMonthByParams");
+
+  console.log("eeeeeeeeeeeeeeeeeeeee",productMaterialType, selectedMonthByParams);
     // api hook
     const listUrl = getGameModes();
     const deleteUrl = deleteGameMode();
@@ -69,8 +73,8 @@ import {
     const tableRef = useRef<DataTableResetHandle>(null);
     const [viewOpen, setViewOpen] = useState(false);
     const [selectedImg, setSelectedImg] = useState<string>({} as string);
-    const [productType, setProductType] = useState("poleythene");
-    const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+    const [productType, setProductType] = useState(productMaterialType || "poleythene");
+    const [selectedMonth, setSelectedMonth] = useState(selectedMonthByParams ? new Date(selectedMonthByParams).toISOString().slice(0, 7) : new Date().toISOString().slice(0, 7));
 
     useEffect(() => {
       if (userId && userType) {

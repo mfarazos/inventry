@@ -77,9 +77,9 @@ const EditCustomer = () => {
       }
     );
     if (productData?.userType === "specificCustomer") {
-      navigate("/inventrylist", { state: { userType: productData?.userType, userId: productData?.userId, userName: productData?.userName } });
+      navigate(`/inventrylist?productMaterialType=${values.product}&selectedMonthByParams=${values?.date}`, { state: { userType: productData?.userType, userId: productData?.userId, userName: productData?.userName } });
     } else {
-      navigate("/inventrylist");
+      navigate(`/inventrylist?productMaterialType=${values.product}&selectedMonthByParams=${values?.date}`);
     }
    // navigate("/inventrylist");
   };

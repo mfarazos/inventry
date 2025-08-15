@@ -300,7 +300,7 @@ import {
             />
           </Dialog>
           <HeaderContent
-            text="list of users"
+            text="Extruding Customers"
              addButtonText1="CREATE USER"
              isModal={true}
              onDialogOpen={() => handleOpenModal("")}

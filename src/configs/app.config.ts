@@ -7,9 +7,10 @@ export type AppConfig = {
   enableMock: boolean;
 };
 
+
 const appConfig: AppConfig = {
-       apiPrefix: "https://apps.leadsmovinghomecompany.com",
-    //  apiPrefix: import.meta.env.VITE_BASE_URL,
+        // apiPrefix: "https://apps.leadsmovinghomecompany.com",
+       apiPrefix: import.meta.env.VITE_BASE_URL,
   authenticatedEntryPath: "/dashboard",
   unAuthenticatedEntryPath: "/sign-in",
   tourPath: "/",

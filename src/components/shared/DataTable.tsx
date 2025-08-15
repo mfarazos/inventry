@@ -318,7 +318,7 @@ function _DataTable<T>(
     if (additionalRate === true) {
       rowStyle.backgroundColor = '#f0faff';
     } else if (additionalRate === false) {
-      rowStyle.backgroundColor = '#eafbea';
+      rowStyle.backgroundColor = 'white';
     } else {
       rowStyle.backgroundColor = 'white';
     }

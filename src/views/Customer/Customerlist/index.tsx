@@ -281,6 +281,24 @@ import {
           accessorKey: "amount",
         },
 
+         {
+          header: "extra rate",
+          accessorKey: "extraRate",
+        },
+
+        {
+          header: "extra amount",
+          accessorKey: "extraAmount",
+        },
+
+       {
+        header: "Total Amount",
+        accessorKey: "totalAmount",
+        cell: (props) => {
+          const { totalAmount, amount } = props.row.original;
+          return totalAmount || amount  ;
+        },
+       },
         {
           header: "Bill Number",
           accessorKey: "billNo",

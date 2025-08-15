@@ -16,6 +16,9 @@ type FormFieldsName = {
   grossWeight: number;
   rate: number;
   amount: number;
+  extraRate: number;
+  extraAmount: number;
+  totalAmount: number;
   billNo: string;
   product: string;
   userId: string; 
@@ -53,7 +56,13 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
     let totalCost = values.rate * values.grossWeight ;
     setFieldValue("amount", totalCost );
 
-  }, [values.rate, values.grossWeight]);
+    let totalExtraCost = values.extraRate * values.grossWeight ;
+    setFieldValue("extraAmount", totalExtraCost );
+
+    setFieldValue("totalAmount", (totalCost + totalExtraCost) )
+
+  
+  }, [values.rate, values.grossWeight, values.extraRate]);
 
 
   useEffect(() => {
@@ -66,19 +75,11 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
     <AdaptableCard divider className="mb-4">
       <h5>{userName || "Sales"}</h5>
       <p className="mb-6">Section to configure basic Client information</p>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         <div className="col-span-1">
-          {/* <FormItem
-            label="Date"
-          >
-            <Field
-              type="Date"
-              autoComplete="off"
-              name="date"
-              placeholder=""
-              component={Input} />
-          </FormItem> */}
+          
           <FormItem
                   label="Date"
                   //invalid={Boolean(errors.date && touched.date)}
@@ -89,7 +90,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
     onChange={(date: Date | null) => setFieldValue('date', date)}
     dateFormat="dd/MM/yyyy"
     placeholderText="dd/mm/yyyy"
-    className="w-full px-3 py-2 border rounded"
+    className="w-full px-12 py-2 border rounded"
     isClearable
   />
                 </FormItem>
@@ -114,7 +115,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="col-span-1">
+        <div className="col-span-2">
           <FormItem
             label="quality"
             invalid={Boolean(errors.quality && touched.quality)}
@@ -129,6 +130,27 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
           </FormItem>
         </div>
 
+
+        
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div className="col-span-1">
+          <FormItem
+            label="Bill Number"
+            invalid={Boolean(errors.billNo && touched.billNo)}
+            errorMessage={errors.billNo}
+          >
+            <Field
+              type="string"
+              autoComplete="off"
+              name="billNo"
+              placeholder="enter bill number"
+              component={Input} />
+
+          </FormItem>
+        </div>
 
         <div className="col-span-1">
           <FormItem
@@ -146,6 +168,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
           </FormItem>
         </div>
       </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="col-span-1">
         <FormItem
@@ -177,6 +200,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
         </FormItem>
       </div>
       </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="col-span-1">
         <FormItem
@@ -195,7 +219,24 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
             />
         </FormItem>
       </div>
-
+          <div className="col-span-1">
+        <FormItem
+          label="ratio"
+          
+        >
+          <Field
+            type="string"
+            autoComplete="off"
+            name="ratio"
+            placeholder="Enter ratio"
+            component={Input} />
+        </FormItem>
+        </div>
+      
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
       <div className="col-span-1">
         <FormItem
           label="Rate"
@@ -211,9 +252,8 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
             component={Input} />
         </FormItem>
       </div>
-      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
       <div className="col-span-1">
         <FormItem
           label="Amount"
@@ -233,39 +273,63 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
         </FormItem>
       </div>
 
-{/*      
+          
+       
+          
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="col-span-1">
         <FormItem
-          label="Phone Number"
+          label="Extra Rate"
           
         >
           <Field
-            type="string"
+            type="number"
             autoComplete="off"
-            name="phoneNumber"
-            placeholder="Enter phone number"
-            component={Input} />
+            name="extraRate"
+            placeholder="Enter extra Rate"
+            component={Input} 
+            />
         </FormItem>
-        </div> 
-         */}
+      </div>
+
           
        
          <div className="col-span-1">
         <FormItem
-          label="ratio"
+          label="Extra Amount"
           
         >
           <Field
-            type="string"
+            type="number"
             autoComplete="off"
-            name="ratio"
-            placeholder="Enter ratio"
+            name="extraAmount"
+            readOnly
             component={Input} />
         </FormItem>
         </div> 
-        </div> 
-     
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="col-span-1">
         <FormItem
+          label="Total Amount"
+          
+        >
+          <Field
+            type="number"
+            autoComplete="off"
+            name="totalAmount"
+            component={Input} 
+            readOnly 
+            />
+        </FormItem>
+      </div>
+
+          <div className="col-span-1">
+
+          <FormItem
     label="product"
     invalid={Boolean(errors.product && touched.product)}
     errorMessage={errors.product}
@@ -285,19 +349,15 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
       <option value="hydensity">Hydensity</option>
     </Field>
   </FormItem>
+          </div>
+       
+       
+          
+        </div> 
+     
+        
 
-  <FormItem
-  label="Additional Rate"
-   invalid={Boolean(errors.additionalRate && touched.additionalRate)}
-   errorMessage={errors.additionalRate}
->
-  <Field
-    type="checkbox"
-    name="additionalRate"
-    className="form-checkbox"
-  />
-</FormItem>
-
+  
               
 
     </AdaptableCard>
