@@ -31,6 +31,8 @@ export async function createCompanyCustomer<T>(data: any) {
   });
 }
 
+
+
 export async function geteditGameMode<T>(id: string) {
   return ApiService.fetchData<T>({
     url: `/inventoryApp/getMaterial/${id}`,
@@ -45,35 +47,41 @@ export async function getCustomerById<T>(id: string) {
   });
 }
 
-export async function getCategoryCustomerById(id: string) {
-  try {
-    const response = await axios.get(`http://localhost:3004/inventoryApp/getcategoryCustomerbyId/${id}`);
 
-    console.log("API Raw Response:", response); // ✅ Debugging ke liye
 
-    return response.data; // ✅ Ensure only data is returned
-  } catch (error) {
-    console.error("Error in API call:", error);
-    throw error;
-  }
+export async function getCategoryCustomerById<T>(id: string) {
+  return ApiService.fetchData<T>({
+    url: `/inventoryApp/getcategoryCustomerbyId/${id}`,
+    method: "get",
+  });
+
 }
+
+
 
 export async function editCategoryCustomer(updatedData: { id: string; clientName: string }) {
   try {
-    const response = await axios.patch("http://localhost:3004/inventoryApp/EditCategoryCustomer", {
+ 
+    const response = ApiService.fetchData<any>({
+    url: `/inventoryApp/EditCategoryCustomer`,
+    method: "patch",
+   data: {
       _id: updatedData.id, // ✅ Backend `_id` expect kar raha hai
       clientName: updatedData.clientName,
       type: "specificCustomer", // ✅ Type bhejna zaroori hai agar required ho
-    });
+    }
+  });
 
     console.log("Edit API Response:", response.data); // ✅ Debugging ke liye
 
-    return response.data; // ✅ Only data return karein
+    return response; // ✅ Only data return karein
   } catch (error) {
     console.error("Error in Edit API call:", error);
     throw error;
   }
 }
+
+
 
 
 export async function upadateByStatusMaterial<T>(id: string) {

@@ -146,14 +146,14 @@ import {
     setCustomerName(""); // Clear the input field
   };
    
-  const handleOpenModal = async (id: string) => {
+  const handleOpenModal = async (id: string, clientName: string) => {
     setIsOpen(true);
     setEditingCustomerId(id); // Set customer ID for editing
 
     // Fetch the customer details by ID
     try {
-      const response = await getCategoryCustomerById(id);
-      setCustomerName(response.data.clientName); // Pre-fill the customer name in the modal
+      //const response = await getCategoryCustomerById(id);
+      setCustomerName(clientName); // Pre-fill the customer name in the modal
     } catch (error) {
       console.error("Error fetching customer:", error);
     }
@@ -202,7 +202,7 @@ import {
             )}
              <span 
         className="cursor-pointer p-2 hover:text-blue-500"
-        onClick={() => handleOpenModal(_id)} // Open modal with current name for editing
+        onClick={() => handleOpenModal(_id, clientName)} // Open modal with current name for editing
       >
         <HiOutlinePencil />
       </span>
@@ -303,7 +303,7 @@ import {
             text="Extruding Customers"
              addButtonText1="CREATE USER"
              isModal={true}
-             onDialogOpen={() => handleOpenModal("")}
+             onDialogOpen={() => handleOpenModal("","")}
             // addLink="/createtournament"
             //  onChangeDropDown={onChangeDropDown}
              showSearch={true}

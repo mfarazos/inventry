@@ -50,7 +50,7 @@ const Confirmations = (props: CustomConfirmDialogProps) => {
           variant="solid"
           onClick={() => createCustomer(name)} // Call createCustomer with the name
         >
-          {customerName ? 'Save' : 'Add'}
+          {customerName ? 'save' : 'Add'}
         </Button>
       </div>
     </Dialog>

@@ -26,6 +26,7 @@ type FormFieldsName = {
   phoneNumber: string;
   ratio: string;
   additionalRate: boolean;
+  description: string;
 };
 
 
@@ -310,6 +311,23 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
         </FormItem>
         </div> 
         </div>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+         <div className="col-span-1">
+        <FormItem
+          label="Description For Extra Rate"
+          
+        >
+          <Field
+            type="string"
+            autoComplete="off"
+            name="description"
+            placeholder="Enter description"
+            component={Input} 
+            />
+        </FormItem>
+      </div>
+      </div>
+
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="col-span-1">
