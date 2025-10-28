@@ -2,8 +2,11 @@ import { HiOutlineSearch, HiPlusCircle } from "react-icons/hi";
 import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
 import Input from "@/components/ui/Input";
-import { Link } from "react-router-dom";
+import { Link, useNavigate,  } from "react-router-dom";
+
 import { ChangeEvent } from "react";
+
+
 
 type HeaderContentProps = {
   text: string | JSX.Element;
@@ -11,7 +14,10 @@ type HeaderContentProps = {
   addLink1?: string;
   addButtonText2?: string;
   addLink2?: string;
-  
+
+  addButtonText3?: string;
+  addLink3?: string;
+
   state?: any;
   onDialogOpen?: () => void
   isModal?: boolean;
@@ -39,6 +45,8 @@ const HeaderContent = (props: HeaderContentProps) => {
     addLink1,
     addButtonText2,
     addLink2,
+    addButtonText3,
+    addLink3,
     isModal,
     onDialogOpen,
     state,
@@ -56,7 +64,11 @@ const HeaderContent = (props: HeaderContentProps) => {
     closingBalance = "0.00", // Default value
   } = props;
 
-  
+  const navigate = useNavigate();
+
+  const handleNavigate = (path: string, state?: any) => {
+      navigate(path, { state });
+    };
 
   return (
     <>
@@ -124,6 +136,15 @@ const HeaderContent = (props: HeaderContentProps) => {
             </Button>
           )}
   
+          
+          {addButtonText3 && addLink3 && (
+            <Link className="block lg:inline-block md:mb-0 mb-4" to={addLink3} state={state}>
+              <Button block variant="solid" size="sm" icon={<HiPlusCircle />}>
+                {addButtonText3}
+              </Button>
+            </Link>
+          )}
+          
           {addButtonText1 && addLink1 && (
             <Link className="block lg:inline-block md:mb-0 mb-4" to={addLink1} state={state}>
               <Button block variant="solid" size="sm" icon={<HiPlusCircle />}>
@@ -131,6 +152,7 @@ const HeaderContent = (props: HeaderContentProps) => {
               </Button>
             </Link>
           )}
+          
 
            {addButtonText2 && addLink2 && (
             <Link className="block lg:inline-block md:mb-0 mb-4" to={addLink2} state={state}>

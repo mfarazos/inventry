@@ -48,6 +48,7 @@ export default function CustomerList() {
     data,
     weightData,
     billData,
+    exceedData,
     showDeleteDialog,
     loading,
     onPaginationChange,
@@ -152,14 +153,18 @@ export default function CustomerList() {
     `;
   }).join('');
 })() +
-  (billDetails?.grossWeightCompany ? `
+  (exceedData && Array.isArray(exceedData) && exceedData.length > 0
+  ? exceedData.map(item => `
     <tr>
       <td colspan="3" style="text-align:center;"><strong>Danaa Excess from Company:</strong></td>
-      <td class="right"><strong>${Number(billDetails?.grossWeightCompany || 0).toFixed(2)}</strong></td>
-      <td class="right"><strong>${Number(billDetails?.rateCompany || 0).toFixed(2)}</strong></td>
-      <td class="right"><strong>${Number(billDetails?.amountCompany || 0).toFixed(2)}</strong></td>
+      <td class="right"><strong>${Number(item?.grossWeightCompany || 0).toFixed(2)}</strong></td>
+      <td class="right"><strong>${Number(item?.rateCompany || 0).toFixed(2)}</strong></td>
+      <td class="right"><strong>${Number(item?.amountCompany || 0).toFixed(2)}</strong></td>
     </tr>
-  ` : '') +
+  `).join('')  // ✅ sab rows ek string me join karo
+  : ''
+)
+ +
   `
     <tr>
       <td colspan="3" style="text-align:center;"><strong>Grand Total:</strong></td>
@@ -366,16 +371,16 @@ export default function CustomerList() {
   const tableRef = useRef<DataTableResetHandle>(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedImg, setSelectedImg] = useState<string>("");
-  const [productType, setProductType] = useState("poleythene");
+  const [productType, setProductType] = useState("Bill");
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentEditingItem, setCurrentEditingItem] = useState<any>(null);
 
   useEffect(() => {
     if (userId && userType) {
-      setFilter({ product: productType, month: selectedMonth, userId, userType });
+      setFilter({ billNo: productType === "mergeBill"? billData?.[0]?.billNo : "", product: productType, month: selectedMonth, userId, userType });
     } else {
-      setFilter({ product: productType, month: selectedMonth, userType: "walkingCustomer", phoneNumber });
+      setFilter({ billNo: productType === "mergeBill"? billData?.[0]?.billNo : "", product: productType, month: selectedMonth, userType: "walkingCustomer", phoneNumber });
     }
   }, [productType, selectedMonth, userId, userType, phoneNumber]);
 
@@ -409,6 +414,12 @@ export default function CustomerList() {
       Swal.fire("Error!", "Approval failed.", "error");
     }
   }, [setData]);
+
+
+  const onChangeDropDown = (itemSelected: string) => {
+      console.log("faraz1", itemSelected)
+      setProductType(itemSelected);
+    };
 
   const onDelete = useCallback((id: string) => async () => {
     const choice = await Swal.fire({
@@ -467,6 +478,7 @@ const allData = useMemo(() => {
   
   let combinedData = [...data];
   const billDetail = billData && billData[0];
+  
 
   // Add Total row
   const totalRow = {
@@ -553,21 +565,22 @@ if (data && data.length > 0) {
 
 
   // Add Danaa Excess row if applicable
-  if (billDetail?.grossWeightCompany) {
+  if (exceedData && exceedData.length > 0) {
+  exceedData.forEach((item, index) => {
     const danaaExcessRow = {
-      _id: 'danaa-excess',
+      _id: `danaa-excess-${index + 1}`, // unique ID for each
       date: 'Danaa Excess from Company:',
       quality: '',
       dcNumber: '',
-      grossWeight: billDetail?.grossWeightCompany,
-      rate: billDetail?.rateCompany,
-      amount: billDetail?.amountCompany,
+      grossWeight: item.grossWeightCompany,
+      rate: item.rateCompany,
+      amount: item.amountCompany,
       isDanaaExcessRow: true
-    
-
     };
+
     combinedData.push(danaaExcessRow);
-  }
+  });
+}
 
   // Add Grand Total row
   const grandTotalRow = {
@@ -727,6 +740,9 @@ if (data && data.length > 0) {
           }}
           {...(shouldShowWeightData && { weightData })}
           billData={billData}
+          dropDownOptions={[{value: "Bill ", label: "Bill"},{value: "mergeBill", label: " Merge Bill "}]}
+          dropDownSelectedValue={"Bill"}
+          onChangeDropDown={onChangeDropDown}
           onChangeMonth={(m) => setSelectedMonth(m)}
           selectedMonth={selectedMonth}
           isMonthPicket

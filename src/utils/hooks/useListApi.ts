@@ -20,6 +20,7 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
   const [data, setData] = useState<T[]>([]);
   const [weightData, setWeightData] = useState({});
   const [billData, setbillData] = useState([]);
+  const [exceedData, setExceedData] = useState([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [sort, setSort] = useState<OnSortParam | null>(null);
   const [query, setQuery] = useState<string>("");
@@ -68,6 +69,7 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
       setData(result.data.data.data);
       setWeightData(result.data.data?.weight || {});
       setbillData(result.data.data?.billNo || []);
+      setExceedData(result.data.data?.materialInfo || []);
       setPageIndex(result.data.data.page?.page ?? 1);
       setPageSize(result.data.data?.page?.limit ?? 10);
       setTotal(result.data.data?.page?.totalDocs ?? 0);
@@ -164,6 +166,7 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
     data,
     weightData,
     billData,
+    exceedData,
     selectedItem,
     showDeleteDialog,
     loading,
