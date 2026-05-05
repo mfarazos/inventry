@@ -185,12 +185,25 @@ import {
 
     // action button cell
     const actionButtons = (props: CellContext<StoreItem, unknown>) => {
-      const { _id, clientName } = props.row.original;
-      //   const { isActive } = props.row.original;
-  
+      const { _id, clientName, phoneNumber, billNo } = props.row.original;
+    
+      const navigateState = {
+        userType: "specificCustomer",
+        userId: _id,
+        userName: clientName,
+        phoneNumber,
+        billNo,
+      };
+    
+      const buttons = [
+        { label: "Inventory", path: "/inventrylist" },
+        { label: "Billing", path: "/showbilling" },
+        { label: "Ledger", path: "/sales-ledger" },
+        { label: "Pay Bill", path: "/create-sales-payment" },
+      ];
+    
       return (
-        <div className="flex flex-col items-end text-lg">
-          {/* Action Icons */}
+        <div className="flex flex-col items-end gap-3 text-lg">
           <div className="flex gap-2">
             {status === "pending" && (
               <span
@@ -200,12 +213,14 @@ import {
                 <HiEye />
               </span>
             )}
-             <span 
-        className="cursor-pointer p-2 hover:text-blue-500"
-        onClick={() => handleOpenModal(_id, clientName)} // Open modal with current name for editing
-      >
-        <HiOutlinePencil />
-      </span>
+    
+            <span
+              className="cursor-pointer p-2 hover:text-blue-500"
+              onClick={() => handleOpenModal(_id, clientName)}
+            >
+              <HiOutlinePencil />
+            </span>
+    
             <span
               className="cursor-pointer p-2 hover:text-red-500"
               onClick={onDelete(_id)}
@@ -214,48 +229,15 @@ import {
             </span>
           </div>
     
-          {/* Buttons (Aligned and Styled) */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "15px",
-              marginTop: "10px",
-            }}
-          >
-            {[
-              { label: "Inventory", path: "/inventrylist" },
-              { label: "Billing", path: "/showbilling" },
-            ].map(({ label, path }) => (
+          <div className="flex flex-wrap justify-end gap-3">
+            {buttons.map(({ label, path }) => (
               <Button
                 key={label}
-                onClick={() =>
-                  handleNavigate(path, {
-                    userType: "specificCustomer",
-                    userId: _id,
-                    userName: clientName,
-                  })
-                }
-                block
-                variant="solid"
                 size="sm"
+                variant={label === "Ledger" ? "twoTone" : "solid"}
                 icon={<HiPlusCircle />}
-                style={{
-                  backgroundColor: "#6a5acd",
-                  color: "white",
-                  padding: "8px 20px",
-                  borderRadius: "6px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) =>
-                  (e.target.style.backgroundColor = "#483d8b")
-                }
-                onMouseLeave={(e) =>
-                  (e.target.style.backgroundColor = "#6a5acd")
-                }
+                onClick={() => handleNavigate(path, navigateState)}
+                className="min-w-[105px]"
               >
                 {label}
               </Button>

@@ -81,7 +81,33 @@ export default function CustomerList() {
     };
 
     const createHtmlContent = () => {
-      const billDetails = billData && billData[0];
+
+      const normalAmount = data.reduce(
+        (sum, item) => sum + Number(item.amount || 0),
+        0
+      );
+      
+      const totalGrossWeight = data.reduce(
+        (sum, item) => sum + Number(item.grossWeight || 0),
+        0
+      );
+      
+      const extraAmount = data.reduce(
+        (sum, item) => sum + Number(item.extraAmount || 0),
+        0
+      );
+      
+      const companyExcessAmount = Array.isArray(exceedData)
+        ? exceedData.reduce((sum, item) => sum + Number(item.amountCompany || 0), 0)
+        : 0;
+
+
+      const billDetails = {
+          billNo: billData?.[0]?.billNo || "-",
+          totalgrossWeight: totalGrossWeight,
+          amount: normalAmount,
+          totalAmount: normalAmount + extraAmount + companyExcessAmount,
+        };
       const selectedMonth = new Date().toISOString().slice(0, 7);
       
      const lineItemsHtml = data && data.length > 0
@@ -368,6 +394,18 @@ export default function CustomerList() {
       });
   };
 
+ const GotoBill = () => {
+  navigate("/create-sales-payment", {
+    state: {
+      userType: userType,
+      userId: userId,
+      userName: userName,
+      phoneNumber: phoneNumber,
+      billNo: billData?.[0]?.billNo,
+    },
+  });
+};
+
   const tableRef = useRef<DataTableResetHandle>(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedImg, setSelectedImg] = useState<string>("");
@@ -477,7 +515,30 @@ const allData = useMemo(() => {
   if (!data || data.length === 0) return [];
   
   let combinedData = [...data];
-  const billDetail = billData && billData[0];
+  const normalAmount = data.reduce(
+    (sum, item) => sum + Number(item.amount || 0),
+    0
+  );
+  
+  const totalGrossWeight = data.reduce(
+    (sum, item) => sum + Number(item.grossWeight || 0),
+    0
+  );
+  
+  const extraAmount = data.reduce(
+    (sum, item) => sum + Number(item.extraAmount || 0),
+    0
+  );
+  
+  const companyExcessAmount = Array.isArray(exceedData)
+    ? exceedData.reduce((sum, item) => sum + Number(item.amountCompany || 0), 0)
+    : 0;
+  
+  const billDetail = {
+    totalgrossWeight: totalGrossWeight,
+    amount: normalAmount,
+    totalAmount: normalAmount + extraAmount + companyExcessAmount,
+  };
   
 
   // Add Total row
@@ -596,7 +657,7 @@ if (data && data.length > 0) {
   combinedData.push(grandTotalRow);
 
   return combinedData;
-}, [data, billData]);
+}, [data, billData, exceedData]);
 
 
   // Redefining columns to handle summary rows
@@ -716,8 +777,10 @@ if (data && data.length > 0) {
           )}
         </Dialog>
 
-<div className="flex justify-between items-center my-6">
-  {/* Left: Download Button */}
+        <div className="flex justify-between items-center my-6">
+
+{/* Left side buttons */}
+<div className="flex gap-3">
   <button
     onClick={() => handleDownload()}
     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -725,10 +788,18 @@ if (data && data.length > 0) {
     Download PDF
   </button>
 
-  {/* Right: Bill No */}
-  <span className="text-2xl font-bold text-gray-800">
-    Bill No: {billData?.[0]?.billNo || "N/A"}
-  </span>
+  <button
+    onClick={() => GotoBill()}
+    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+  >
+    Pay Bill
+  </button>
+</div>
+
+{/* Right: Bill No */}
+<span className="text-2xl font-bold text-gray-800">
+  Bill No: {billData?.[0]?.billNo || "N/A"}
+</span>
 </div>
         <HeaderContent
           text={userName ? `${userName} Billing` : "Sales"}

@@ -174,6 +174,48 @@ import {
   >
     Billing
   </Button>
+  
+  <Button
+    onClick={() => handleNavigate("/create-sales-payment", { userType: "walkingCustomer", phoneNumber: phoneNumber, userName: clientName })}
+    block
+    variant="solid"
+    size="sm"
+    icon={<HiPlusCircle />}
+    style={{
+      backgroundColor: "#6a5acd",
+      color: "white",
+      padding: "8px 20px",
+      borderRadius: "6px",
+      fontSize: "14px",
+      cursor: "pointer",
+      transition: "all 0.3s ease",
+    }}
+    onMouseEnter={(e) => (e.target.style.backgroundColor = "#483d8b")}
+    onMouseLeave={(e) => (e.target.style.backgroundColor = "#6a5acd")}
+  >
+    Pay Bill
+  </Button>
+
+  <Button
+    onClick={() => handleNavigate("/sales-ledger", { userType: "walkingCustomer", phoneNumber: phoneNumber, userName: clientName })}
+    block
+    variant="solid"
+    size="sm"
+    icon={<HiPlusCircle />}
+    style={{
+      backgroundColor: "#6a5acd",
+      color: "white",
+      padding: "8px 20px",
+      borderRadius: "6px",
+      fontSize: "14px",
+      cursor: "pointer",
+      transition: "all 0.3s ease",
+    }}
+    onMouseEnter={(e) => (e.target.style.backgroundColor = "#483d8b")}
+    onMouseLeave={(e) => (e.target.style.backgroundColor = "#6a5acd")}
+  >
+    Ledger
+  </Button>
 </div>
 
           

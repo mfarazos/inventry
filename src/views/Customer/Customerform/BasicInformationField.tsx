@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import appConfig from '@/configs/app.config'
 import AdaptableCard from "@/components/shared/AdaptableCard";
 import Input from "@/components/ui/Input";
 import { FormItem } from "@/components/ui/Form";
@@ -45,12 +46,69 @@ type BasicInformationFieldsProps = {
 const BasicInformationFields = (props: BasicInformationFieldsProps) => {
   const { touched, errors, page, userName, userId, userType , phoneNumber } = props;
    const { values, setFieldValue, handleChange } = useFormikContext<FormFieldsName>();
+
+   const [customerSuggestions, setCustomerSuggestions] = useState<any[]>([]);
+const [showSuggestions, setShowSuggestions] = useState(false);
+const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+const suggestionBoxRef = useRef<HTMLDivElement | null>(null);
+
+const API_BASE_URL = appConfig.apiPrefix;
+
   // Local state to manage date values
   useEffect(() => {
     let totalWeight = values.weightPure + values.weightMixing;
     setFieldValue("grossWeight", totalWeight  );
    
   }, [values.weightPure, values.weightMixing]);
+
+  useEffect(() => {
+    const searchValue = values.clientName?.trim();
+  
+    if (!searchValue || searchValue.length < 2 || userName) {
+      setCustomerSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+  
+    const debounceTimer = setTimeout(async () => {
+      try {
+        setLoadingSuggestions(true);
+  
+        const response = await fetch(
+          `${API_BASE_URL}/inventoryApp/walkingCustomer?search=${encodeURIComponent(
+            searchValue
+          )}&limit=10`
+        );
+  
+        const result = await response.json();
+  
+        const customers = result?.data?.data || [];
+  
+        // duplicate names remove karne ke liye
+        const uniqueCustomers = customers.filter(
+          (customer: any, index: number, self: any[]) =>
+            customer?.clientName &&
+            index ===
+              self.findIndex(
+                (item: any) =>
+                  item.clientName?.toLowerCase().trim() ===
+                  customer.clientName?.toLowerCase().trim()
+              )
+        );
+  
+        setCustomerSuggestions(uniqueCustomers);
+        setShowSuggestions(uniqueCustomers.length > 0);
+      } catch (error) {
+        console.log("Customer suggestions error:", error);
+        setCustomerSuggestions([]);
+        setShowSuggestions(false);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    }, 400);
+  
+    return () => clearTimeout(debounceTimer);
+  }, [values.clientName, userName]);
 
   useEffect(() => {
   
@@ -97,22 +155,74 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
                 </FormItem>
         </div>
 
-        <div className="col-span-1">
-          <FormItem
-            label="Client Name"
-            invalid={Boolean(errors.clientName && touched.clientName)}
-            errorMessage={errors.clientName}
-            
-          >
-            <Field type="string" 
-             autoComplete="off" 
-             name="clientName" 
-             placeholder="enter name" 
-             component={Input} 
-             readOnly={userName? true: false} 
-             />
-          </FormItem>
-        </div>
+        <div className="col-span-1 relative" ref={suggestionBoxRef}>
+  <FormItem
+    label="Client Name"
+    invalid={Boolean(errors.clientName && touched.clientName)}
+    errorMessage={errors.clientName}
+  >
+    <Input
+      type="text"
+      autoComplete="off"
+      name="clientName"
+      placeholder="Enter customer name"
+      value={values.clientName}
+      readOnly={userName ? true : false}
+      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+        setFieldValue("clientName", e.target.value);
+        setShowSuggestions(true);
+      }}
+      onFocus={() => {
+        if (customerSuggestions.length > 0 && !userName) {
+          setShowSuggestions(true);
+        }
+      }}
+      onBlur={() => {
+        // delay isliye taake suggestion click register ho jaye
+        setTimeout(() => {
+          setShowSuggestions(false);
+        }, 200);
+      }}
+    />
+
+    {showSuggestions && !userName && (
+      <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        {loadingSuggestions ? (
+          <div className="px-3 py-2 text-sm text-gray-500">
+            Searching customers...
+          </div>
+        ) : customerSuggestions.length > 0 ? (
+          customerSuggestions.map((customer: any, index: number) => (
+            <button
+              key={`${customer.clientName}-${index}`}
+              type="button"
+              className="w-full text-left px-3 py-2 hover:bg-gray-100 transition"
+              onMouseDown={() => {
+                setFieldValue("clientName", customer.clientName);
+                setShowSuggestions(false);
+              }}
+            >
+              <div className="font-medium text-gray-800">
+                {customer.clientName}
+              </div>
+
+              {(customer.billNo) && (
+                <div className="text-xs text-gray-500">
+                  {customer.billNo ? `Bill No: ${customer.billNo}` : ""}
+                  
+                </div>
+              )}
+            </button>
+          ))
+        ) : (
+          <div className="px-3 py-2 text-sm text-gray-500">
+            No customer found
+          </div>
+        )}
+      </div>
+    )}
+  </FormItem>
+</div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -129,4 +129,21 @@ export const protectedRoutes = [
     component: lazy(() => import("@/views/billing/bllingList")),
     authority: [],
   },
+
+  {
+    key: "create-sales-payment",
+    path: `/create-sales-payment`,
+    component: lazy(() => import("@/views/salesPayment/CreatePayment")),
+    authority: [],
+  },
+
+  {
+    key: "sales-payment",
+    path: `/sales-ledger`,
+    component: lazy(() => import("@/views/salesPayment/PaymentList")),
+    authority: [],
+  },
+
+  
+
 ];

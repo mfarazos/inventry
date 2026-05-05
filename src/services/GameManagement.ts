@@ -15,6 +15,14 @@ export function getCategorycustomers() {
   return "/inventoryApp/getCategoryCustomer";
 }
 
+export async function getSalesLedgerYearly<T>(params: T) {
+  return ApiService.fetchData({
+    url: "/inventoryApp/getSalesLedgerYearly",
+    method: "get",
+    params,
+  });
+}
+
 export function getwalkingCustomers() {
   return "/inventoryApp/getwalkingcustomer";
 }
@@ -55,6 +63,14 @@ export async function getCategoryCustomerById<T>(id: string) {
     method: "get",
   });
 
+}
+
+export async function createSalesPayment<T>(data: T) {
+  return ApiService.fetchData({
+    url: "/inventoryApp/receiveSalesPayment",
+    method: "post",
+    data,
+  });
 }
 
 
