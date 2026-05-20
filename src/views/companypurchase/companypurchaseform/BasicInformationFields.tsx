@@ -94,7 +94,8 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
     onChange={(date: Date | null) => setFieldValue('date', date)}
     dateFormat="dd/MM/yyyy"
     placeholderText="dd-mm-yyyy"
-    className="w-full px-20 py-2 border rounded"
+    wrapperClassName="w-full"
+    className="w-full h-11 px-3 border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
     isClearable
   />
       </FormItem>
@@ -274,13 +275,9 @@ errorMessage={errors.quality}
         <Field 
           as="select" 
           name="product"
-          className="form-select"
-          
-          style={{
-            fontWeight: "bold", // Ensures the selected value is bold
-          }}
+          className="w-full h-11 px-3 border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
         >
-          <option value="">Select product</option> {/* Placeholder option */}
+          <option value="">Select product</option>
           <option value="poleythene">Poleythene</option>
           <option value="hydensity">Hydensity</option>
         </Field>
@@ -333,4 +330,3 @@ errorMessage={errors.quality}
 };
 
 export default BasicInformationFields;
-
