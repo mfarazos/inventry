@@ -4,12 +4,24 @@ import HeaderLogo from '@/components/template/HeaderLogo'
 import MobileNav from '@/components/template/MobileNav'
 import HorizontalNav from '@/components/template/HorizontalNav'
 import View from '@/views'
+import { useNavigate } from 'react-router-dom'
+import { HiArrowLeft } from 'react-icons/hi'
 
 const HeaderActionsStart = () => {
+    const navigate = useNavigate()
+
     return (
         <>
             <HeaderLogo />
             <MobileNav />
+            <button
+                type="button"
+                className="header-action-item header-action-item-hoverable text-2xl"
+                aria-label="Go back"
+                onClick={() => navigate(-1)}
+            >
+                <HiArrowLeft />
+            </button>
         </>
     )
 }
