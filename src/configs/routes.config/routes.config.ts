@@ -57,8 +57,8 @@ export const protectedRoutes = [
     authority: [],
   },
   {
-    key: `creategamemodes`,
-    path: "/creategamemodes",
+    key: `createDanarecipt`,
+    path: "/createDanarecipt",
     component: lazy(() => import("@/views/companypurchase/Createcompanypurchase")),
     authority: [],
   },
@@ -92,8 +92,8 @@ export const protectedRoutes = [
   },
   
   {
-    key: "createtournament",
-    path: `/createtournament`,
+    key: "createRecipt",
+    path: `/createRecipt`,
     component: lazy(() => import("@/views/Customer/CreateCustomer")),
     authority: [],
   },

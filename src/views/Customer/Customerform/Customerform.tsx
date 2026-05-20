@@ -137,8 +137,8 @@ const CustomerForm = forwardRef<FormikRef, clientForm>((props, ref) => {
         {({ values, touched, errors, isSubmitting }) => (
           <Form>
             <FormContainer>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2">
+              <div className="w-full max-w-5xl mx-auto">
+                <div>
                   <BasicInformationFields
                     userName={userName}
                     userId={ userId}

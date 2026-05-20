@@ -803,11 +803,11 @@ const columns: ColumnDef<StoreItem>[] = useMemo(
           <HeaderContent
             text= {userName? userName + " " + "Account" : "Company Accounts"}
             addButtonText1="Add Dana Receipt"
-            addLink1="/creategamemodes"
+            addLink1="/createDanarecipt"
             addButtonText3={ userName?  "Billing" : ""}
             addLink3="/showbilling"
             addButtonText2="Add Customer Receipt"
-            addLink2= "/createtournament"
+            addLink2= "/createRecipt"
             state = {{userType: userType || "walkingCustomer", userId: userId || null, userName: userName || null}}
             onChangeDropDown={onChangeDropDown}
             onChangeMonth={onChangeMonth}

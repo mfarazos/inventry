@@ -364,7 +364,7 @@ import {
           <HeaderContent
             text={userName? userName + " " + "Consumption" : "Sales"}
             addButtonText="Add Customer Data"
-            addLink="/createtournament"
+            addLink="/createRecipt"
             state = {{userType: userType || "walkingCustomer", userId: userId || null, userName: userName || null}}
             onChangeDropDown={onChangeDropDown}
             showSearch={true}
