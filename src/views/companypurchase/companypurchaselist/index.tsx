@@ -33,6 +33,8 @@ import {
   import { FaLock, FaLockOpen, FaUnlockAlt } from "react-icons/fa";
   import Swal from "sweetalert2";
   import { handleHttpReq } from "@/utils/HandleHttp";
+  import html2pdf from "html2pdf.js/dist/html2pdf.bundle.min.js";
+  import ApiService from "@/services/ApiService";
   
   function Companypurchaselist() {
     // theme and navigation hook
@@ -75,6 +77,7 @@ import {
     const [selectedImg, setSelectedImg] = useState<string>({} as string);
     const [productType, setProductType] = useState(productMaterialType || "poleythene");
     const [selectedMonth, setSelectedMonth] = useState(selectedMonthByParams ? new Date(selectedMonthByParams).toISOString().slice(0, 7) : new Date().toISOString().slice(0, 7));
+    const [downloadingPdf, setDownloadingPdf] = useState(false);
 
     useEffect(() => {
       if (userId && userType) {
@@ -92,6 +95,337 @@ import {
         });
       }
     }, [productType, selectedMonth,]);
+  
+    const handleDownloadSummaryPdf = async () => {
+  let element: HTMLDivElement | null = null
+
+  try {
+    setDownloadingPdf(true)
+
+    const filterParams = {
+      product: productType,
+      month: selectedMonth,
+      ...(userId && userType ? { userId, userType } : { userType: 'walkingCustomer' }),
+    }
+
+    const firstResult = await ApiService.fetchData<any>({
+      url: getGameModes(),
+      method: 'get',
+      params: {
+        page: 1,
+        limit: pageSize || 50,
+        ...filterParams,
+      },
+    })
+
+    const totalRecords =
+      firstResult?.data?.data?.total ||
+      firstResult?.data?.total ||
+      firstResult?.data?.data?.count ||
+      firstResult?.data?.count ||
+      10000
+
+    const result = await ApiService.fetchData<any>({
+      url: getGameModes(),
+      method: 'get',
+      params: {
+        page: 1,
+        limit: totalRecords,
+        pageSize: totalRecords,
+        ...filterParams,
+      },
+    })
+
+    const responseData = result?.data?.data || {}
+    const allRecords = responseData?.data || []
+    const pdfWeightData = responseData?.weight || {}
+
+    const accountName = userName ? `${userName} Account` : 'Company Accounts'
+
+    const monthDate = new Date(`${selectedMonth}-01`)
+    const monthYearString = monthDate.toLocaleDateString('en-GB', {
+      month: 'long',
+      year: 'numeric',
+    })
+
+    const safeAccountName = accountName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+
+    const monthString = monthDate
+      .toLocaleDateString('en-GB', { month: 'short' })
+      .toLowerCase()
+
+    const filename = `${safeAccountName}-summary-${monthString}-${monthDate.getFullYear()}.pdf`
+
+    const num = (value: any) => Number(value || 0)
+
+    const formatDate = (dateStr: string) => {
+      if (!dateStr) return '-'
+      const date = new Date(dateStr)
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = date.getFullYear()
+      return `${day}-${month}-${year}`
+    }
+
+    const totalBags = allRecords
+      .filter((record: any) => record.type === 'purchase')
+      .reduce((sum: number, record: any) => sum + num(record.totalBags), 0)
+
+    const openingPure = num(pdfWeightData?.openingBalanceWeightPure)
+    const openingMixing = num(pdfWeightData?.openingBalanceWeightMixing)
+    const receivedPure = num(pdfWeightData?.purchaseWeightPure)
+    const receivedMixing = num(pdfWeightData?.purchaseWeightMixing)
+    const receivedOpeningPure = num(pdfWeightData?.totalPurchaseWeightPure)
+    const receivedOpeningMixing = num(pdfWeightData?.totalPurchaseWeightMixing)
+    const consumptionPure = num(pdfWeightData?.saleWeightPure)
+    const consumptionMixing = num(pdfWeightData?.saleWeightMixing)
+    const closingPure = num(pdfWeightData?.closingWeightPure)
+    const closingMixing = num(pdfWeightData?.closingWeightMixing)
+
+    const recordsRows = allRecords.map((record: any) => `
+      <tr class="${record.type === 'purchase' ? 'purchase-row' : 'sale-row'}">
+        <td>${formatDate(record.date)}</td>
+        <td>${record.type === 'purchase' ? `${record.totalBags || '-'} bags` : '-'}</td>
+        <td>${record.type === 'purchase' ? `${record.grossWeight || '-'} kg` : '-'}</td>
+        <td>${record.type === 'purchase' ? record.receivedFrom || '-' : '-'}</td>
+        <td>${record.type === 'purchase' ? record.quality || '-' : '-'}</td>
+        <td>${record.type === 'purchase' ? record.billNo || '-' : '-'}</td>
+        <td>${record.type === 'sale' ? record.clientName || '-' : '-'}</td>
+        <td>${record.type === 'sale' ? record.quality || '-' : '-'}</td>
+        <td>${record.type === 'sale' ? record.dcNumber || '-' : '-'}</td>
+        <td>${record.type === 'sale' ? record.ratio || '-' : '-'}</td>
+        <td>${record.type === 'sale' ? `${record.grossWeight || '-'} kg` : '-'}</td>
+        <td>${record.type === 'sale' ? record.billNo || '-' : '-'}</td>
+      </tr>
+    `).join('')
+
+    const htmlContent = `
+      <div class="pdf-wrapper">
+        <div class="top-header">
+          <div>
+            <h1>Production summary</h1>
+          </div>
+          <div class="date-text">
+            Date: ${monthYearString}
+          </div>
+        </div>
+
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Total Bags</th>
+              <th>Total Weight</th>
+              <th>Received From</th>
+              <th>Quality</th>
+              <th>Voucher Number</th>
+              <th>Client Name</th>
+              <th>Quality</th>
+              <th>DC Number</th>
+              <th>Ratio</th>
+              <th>Gross Weight</th>
+              <th>Bill Number</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${recordsRows}
+          </tbody>
+        </table>
+
+        <h2 class="summary-title">Summary</h2>
+
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>stock purchase</th>
+              <th>Pure</th>
+              <th>Mixing</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Opening balance</td>
+              <td>${openingPure.toFixed(2)}</td>
+              <td>${openingMixing.toFixed(2)}</td>
+              <td>${(openingPure + openingMixing).toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td>Total dana received by party</td>
+              <td>${receivedPure.toFixed(2)}</td>
+              <td>${receivedMixing.toFixed(2)}</td>
+              <td>${(receivedPure + receivedMixing).toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td>Total dana received + opening balance</td>
+              <td>${receivedOpeningPure.toFixed(2)}</td>
+              <td>${receivedOpeningMixing.toFixed(2)}</td>
+              <td>${(receivedOpeningPure + receivedOpeningMixing).toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td>Total dana consumption</td>
+              <td>${consumptionPure.toFixed(2)}</td>
+              <td>${consumptionMixing.toFixed(2)}</td>
+              <td>${(consumptionPure + consumptionMixing).toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td>Closing Balance</td>
+              <td>${closingPure.toFixed(2)}</td>
+              <td>${closingMixing.toFixed(2)}</td>
+              <td>${(closingPure + closingMixing).toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td>Bags</td>
+              <td>-</td>
+              <td>-</td>
+              <td>${totalBags}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `
+
+    element = document.createElement('div')
+    element.innerHTML = htmlContent
+
+    const style = document.createElement('style')
+    style.innerHTML = `
+      .pdf-wrapper {
+        padding: 25px 30px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #222;
+        background: #fff;
+      }
+
+      .top-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+      }
+
+      .top-header h1 {
+        font-size: 24px;
+        margin: 0;
+        font-weight: 700;
+      }
+
+      .date-text {
+        font-size: 22px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .records-table {
+        font-size: 8px;
+        margin-bottom: 28px;
+        table-layout: fixed;
+      }
+
+      .records-table th,
+      .records-table td {
+        border: 1px solid #d8d8d8;
+        padding: 6px 4px;
+        text-align: center;
+        word-break: break-word;
+      }
+
+      .records-table th {
+        background: #eeeeee;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .purchase-row {
+        background: #eaf8ff;
+      }
+
+      .sale-row {
+        background: #eaffea;
+      }
+
+      .summary-title {
+        text-align: center;
+        font-size: 24px;
+        font-weight: 700;
+        margin: 20px 0;
+      }
+
+      .summary-table {
+        font-size: 13px;
+        table-layout: fixed;
+      }
+
+      .summary-table th,
+      .summary-table td {
+        border: 1px solid #d8d8d8;
+        padding: 10px;
+      }
+
+      .summary-table th {
+        background: #eeeeee;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .summary-table td:first-child {
+        text-align: left;
+        width: 55%;
+      }
+
+      .summary-table td:not(:first-child) {
+        text-align: right;
+      }
+    `
+
+    element.prepend(style)
+    document.body.appendChild(element)
+
+    await html2pdf()
+      .from(element)
+      .set({
+        margin: 0.25,
+        filename,
+        image: {
+          type: 'jpeg',
+          quality: 0.98,
+        },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+        },
+        jsPDF: {
+          unit: 'in',
+          format: 'a4',
+          orientation: 'landscape',
+        },
+      })
+      .save()
+  } catch (error) {
+    console.error('Error downloading summary PDF:', error)
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Download Failed',
+      text: 'Failed to generate summary PDF. Please try again.',
+    })
+  } finally {
+    if (element && document.body.contains(element)) {
+      document.body.removeChild(element)
+    }
+
+    setDownloadingPdf(false)
+  }
+}
   
     const onViewOpen = (img: string) => {
       setSelectedImg(img);
@@ -453,6 +787,19 @@ const columns: ColumnDef<StoreItem>[] = useMemo(
               alt={"abc"}
             />
           </Dialog>
+          <div className="flex gap-3 my-4">
+            <button
+              onClick={handleDownloadSummaryPdf}
+              disabled={downloadingPdf}
+              className={`px-4 py-2 rounded font-medium transition-all ${
+                downloadingPdf
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
+              }`}
+            >
+              {downloadingPdf ? "Generating PDF..." : "Download Summary PDF"}
+            </button>
+          </div>
           <HeaderContent
             text= {userName? userName + " " + "Account" : "Company Accounts"}
             addButtonText1="Add Dana Receipt"
