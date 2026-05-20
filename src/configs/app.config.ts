@@ -13,7 +13,7 @@ const appConfig: AppConfig = {
        //apiPrefix: "http://localhost:3004",
        apiPrefix: "https://nooraniplastic.com",
       //  apiPrefix: import.meta.env.VITE_BASE_URL,
-  authenticatedEntryPath: "/dashboard",
+  authenticatedEntryPath: "/inventrylist",
   unAuthenticatedEntryPath: "/sign-in",
   tourPath: "/",
   locale: "en",

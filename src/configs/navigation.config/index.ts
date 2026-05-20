@@ -5,16 +5,6 @@ import {
 import type { NavigationTree } from "@/@types/navigation";
 
 const navigationConfig: NavigationTree[] = [
-  {
-    key: "dashboard",
-    path: "/dashobard",
-    title: "Dashboard",
-    translateKey: "dashboard",
-    icon: "dashboard",
-    type: NAV_ITEM_TYPE_ITEM,
-    authority: [],
-    subMenu: [],
-  },
   // {
   //   key: "store",
   //   path: "/store",
