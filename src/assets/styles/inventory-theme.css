@@ -24,7 +24,8 @@ body {
 }
 
 .container {
-  max-width: 1180px;
+  max-width: none;
+  width: 100%;
 }
 
 .header {
