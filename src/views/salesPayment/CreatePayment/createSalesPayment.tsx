@@ -44,9 +44,6 @@ import PaymentSalesForm, {
             { placement: "top-center" }
           );
   
-          navigate("/sales-payment-list", {
-            state: { userType, userId, userName, phoneNumber, billNo },
-          });
         }
       });
     };
