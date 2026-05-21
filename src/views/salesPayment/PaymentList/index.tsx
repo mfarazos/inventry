@@ -1,9 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import Table from "@/components/ui/Table";
 import Select from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
+import Dialog from "@/components/ui/Dialog";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import Notification from "@/components/ui/Notification";
+import toast from "@/components/ui/toast";
 import { useLocation } from "react-router-dom";
-import { getSalesLedgerYearly } from "@/services/GameManagement";
+import {
+  deleteSalesPayment,
+  editSalesPayment,
+  getSalesLedgerYearly,
+} from "@/services/GameManagement";
+import PaymentSalesForm, { FormModel, SetSubmitting } from "../Paymentform";
 import html2pdf from "html2pdf.js/dist/html2pdf.bundle.min.js";
+import { HiOutlinePencil, HiOutlineTrash } from "react-icons/hi";
 
 const { Tr, Th, Td, THead, TBody } = Table;
 
@@ -13,6 +24,9 @@ type LedgerRow = {
   description: string;
   folio: string;
   billNo?: string | number;
+  paymentId?: string;
+  paymentMethod?: "cash" | "bank" | "online" | "other";
+  entryType?: string;
   debit: number;
   credit: number;
   balance: number;
@@ -58,6 +72,15 @@ const formatAmount = (amount: number) => {
   });
 };
 
+const formatInputDate = (date: string) => {
+  if (!date) return new Date().toISOString().slice(0, 10);
+
+  const parsedDate = new Date(date);
+  if (Number.isNaN(parsedDate.getTime())) return String(date).slice(0, 10);
+
+  return parsedDate.toISOString().slice(0, 10);
+};
+
 const getRowType = (item: LedgerRow, index: number, rows: LedgerRow[]) => {
   const description = String(item?.description || "").toLowerCase();
 
@@ -86,6 +109,11 @@ const PaymentList = () => {
   const [ledgerData, setLedgerData] = useState<LedgerRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<LedgerRow | null>(null);
+  const [deletingPayment, setDeletingPayment] = useState<LedgerRow | null>(
+    null,
+  );
+  const [deletingPaymentId, setDeletingPaymentId] = useState("");
 
   const selectedYearOption = useMemo(() => {
     return yearOptions.find((item) => item.value === selectedYear);
@@ -106,6 +134,23 @@ const PaymentList = () => {
   const openingRow = ledgerData[0];
   const finalRow = ledgerData[ledgerData.length - 1];
   const hasLedgerRows = ledgerData.length > 0;
+
+  const canManagePayment = (item: LedgerRow) => {
+    return Boolean(item.paymentId && Number(item.credit || 0) > 0);
+  };
+
+  const getPaymentInitialData = (item: LedgerRow): Partial<FormModel> => ({
+    userId: userId || "",
+    userType: userType || "walkingCustomer",
+    clientName: userName || "",
+    phoneNumber: phoneNumber || "",
+    billNo: String(item.billNo || billNo || ""),
+    folio: item.folio || "",
+    date: formatInputDate(item.date || item.monthKey),
+    amount: Number(item.credit || 0),
+    paymentMethod: item.paymentMethod || "cash",
+    description: item.description || "Payment received",
+  });
 
   const fetchLedger = async () => {
     try {
@@ -131,6 +176,67 @@ const PaymentList = () => {
   useEffect(() => {
     fetchLedger();
   }, [selectedYear, selectedMonth, userType, userId, phoneNumber, billNo]);
+
+  const handleEditPayment = async (
+    values: FormModel,
+    setSubmitting: SetSubmitting,
+  ) => {
+    if (!editingPayment?.paymentId) return;
+
+    try {
+      setSubmitting(true);
+
+      await editSalesPayment(editingPayment.paymentId, {
+        ...values,
+        amount: Number(values.amount),
+      });
+
+      toast.push(
+        <Notification
+          title="Successfully updated"
+          type="success"
+          duration={2500}
+        >
+          Sales payment updated successfully
+        </Notification>,
+        { placement: "top-center" },
+      );
+
+      setEditingPayment(null);
+      fetchLedger();
+    } catch (error) {
+      console.log("Edit sales payment error", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeletePayment = async () => {
+    if (!deletingPayment?.paymentId) return;
+
+    try {
+      setDeletingPaymentId(deletingPayment.paymentId);
+      await deleteSalesPayment(deletingPayment.paymentId);
+
+      toast.push(
+        <Notification
+          title="Successfully deleted"
+          type="success"
+          duration={2500}
+        >
+          Sales payment deleted successfully
+        </Notification>,
+        { placement: "top-center" },
+      );
+
+      setDeletingPayment(null);
+      fetchLedger();
+    } catch (error) {
+      console.log("Delete sales payment error", error);
+    } finally {
+      setDeletingPaymentId("");
+    }
+  };
 
   const handleDownloadLedgerPdf = async () => {
     let element: HTMLDivElement | null = null;
@@ -417,13 +523,14 @@ const PaymentList = () => {
 
         <Table className="w-full table-fixed" hoverable={false}>
           <colgroup>
-            <col className="w-[12%]" />
-            <col className="w-[28%]" />
+            <col className="w-[11%]" />
+            <col className="w-[25%]" />
             <col className="w-[8%]" />
             <col className="w-[10%]" />
-            <col className="w-[14%]" />
-            <col className="w-[14%]" />
-            <col className="w-[14%]" />
+            <col className="w-[13%]" />
+            <col className="w-[13%]" />
+            <col className="w-[13%]" />
+            <col className="w-[7%]" />
           </colgroup>
 
           <THead>
@@ -449,13 +556,16 @@ const PaymentList = () => {
               <Th className="!text-right text-xs uppercase tracking-wide text-gray-500">
                 Balance
               </Th>
+              <Th className="!text-center text-xs uppercase tracking-wide text-gray-500">
+                Action
+              </Th>
             </Tr>
           </THead>
 
           <TBody>
             {loading ? (
               <Tr>
-                <Td colSpan={7} className="py-8 text-center text-gray-500">
+                <Td colSpan={8} className="py-8 text-center text-gray-500">
                   Loading ledger...
                 </Td>
               </Tr>
@@ -492,12 +602,36 @@ const PaymentList = () => {
                     <Td className="!text-right font-semibold tabular-nums text-blue-700">
                       {formatAmount(item.balance)}
                     </Td>
+                    <Td className="!text-center">
+                      {canManagePayment(item) ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            size="xs"
+                            type="button"
+                            variant="twoTone"
+                            icon={<HiOutlinePencil />}
+                            onClick={() => setEditingPayment(item)}
+                          />
+                          <Button
+                            size="xs"
+                            type="button"
+                            variant="twoTone"
+                            color="red-600"
+                            icon={<HiOutlineTrash />}
+                            loading={deletingPaymentId === item.paymentId}
+                            onClick={() => setDeletingPayment(item)}
+                          />
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </Td>
                   </Tr>
                 );
               })
             ) : (
               <Tr>
-                <Td colSpan={7} className="py-8 text-center text-gray-500">
+                <Td colSpan={8} className="py-8 text-center text-gray-500">
                   No ledger data found for {selectedPeriodLabel}
                 </Td>
               </Tr>
@@ -505,6 +639,45 @@ const PaymentList = () => {
           </TBody>
         </Table>
       </div>
+
+      <Dialog
+        isOpen={Boolean(editingPayment)}
+        width={760}
+        onClose={() => setEditingPayment(null)}
+        onRequestClose={() => setEditingPayment(null)}
+      >
+        {editingPayment && (
+          <PaymentSalesForm
+            type="edit"
+            userName={userName}
+            userId={userId}
+            userType={userType}
+            initialData={getPaymentInitialData(editingPayment)}
+            onFormSubmit={handleEditPayment}
+            onDiscard={() => setEditingPayment(null)}
+          />
+        )}
+      </Dialog>
+
+      <ConfirmDialog
+        isOpen={Boolean(deletingPayment)}
+        type="danger"
+        title="Delete sales payment"
+        confirmText="Delete"
+        confirmButtonColor="red-600"
+        onCancel={() => setDeletingPayment(null)}
+        onClose={() => setDeletingPayment(null)}
+        onRequestClose={() => setDeletingPayment(null)}
+        onConfirm={handleDeletePayment}
+      >
+        <p>
+          This will remove the credit entry of{" "}
+          <span className="font-semibold">
+            {formatAmount(deletingPayment?.credit || 0)}
+          </span>{" "}
+          from the ledger.
+        </p>
+      </ConfirmDialog>
     </div>
   );
 };

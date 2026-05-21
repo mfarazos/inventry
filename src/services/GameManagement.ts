@@ -10,7 +10,6 @@ export function getCustomers() {
   return "/inventoryApp/getCustomer";
 }
 
-
 export function getCategorycustomers() {
   return "/inventoryApp/getCategoryCustomer";
 }
@@ -39,8 +38,6 @@ export async function createCompanyCustomer<T>(data: any) {
   });
 }
 
-
-
 export async function geteditGameMode<T>(id: string) {
   return ApiService.fetchData<T>({
     url: `/inventoryApp/getMaterial/${id}`,
@@ -55,14 +52,11 @@ export async function getCustomerById<T>(id: string) {
   });
 }
 
-
-
 export async function getCategoryCustomerById<T>(id: string) {
   return ApiService.fetchData<T>({
     url: `/inventoryApp/getcategoryCustomerbyId/${id}`,
     method: "get",
   });
-
 }
 
 export async function createSalesPayment<T>(data: T) {
@@ -73,20 +67,35 @@ export async function createSalesPayment<T>(data: T) {
   });
 }
 
-
-
-export async function editCategoryCustomer(updatedData: { id: string; clientName: string }) {
-  try {
- 
-    const response = ApiService.fetchData<any>({
-    url: `/inventoryApp/EditCategoryCustomer`,
+export async function editSalesPayment<T>(id: string, data: T) {
+  return ApiService.fetchData({
+    url: `/inventoryApp/editSalesPayment/${id}`,
     method: "patch",
-   data: {
-      _id: updatedData.id, // ✅ Backend `_id` expect kar raha hai
-      clientName: updatedData.clientName,
-      type: "specificCustomer", // ✅ Type bhejna zaroori hai agar required ho
-    }
+    data,
   });
+}
+
+export async function deleteSalesPayment<T>(id: string) {
+  return ApiService.fetchData<T>({
+    url: `/inventoryApp/deleteSalesPayment/${id}`,
+    method: "delete",
+  });
+}
+
+export async function editCategoryCustomer(updatedData: {
+  id: string;
+  clientName: string;
+}) {
+  try {
+    const response = ApiService.fetchData<any>({
+      url: `/inventoryApp/EditCategoryCustomer`,
+      method: "patch",
+      data: {
+        _id: updatedData.id, // ✅ Backend `_id` expect kar raha hai
+        clientName: updatedData.clientName,
+        type: "specificCustomer", // ✅ Type bhejna zaroori hai agar required ho
+      },
+    });
 
     console.log("Edit API Response:", response.data); // ✅ Debugging ke liye
 
@@ -97,16 +106,11 @@ export async function editCategoryCustomer(updatedData: { id: string; clientName
   }
 }
 
-
-
-
 export async function upadateByStatusMaterial<T>(id: string) {
   return ApiService.fetchData<T>({
     url: `/inventoryApp/updateMaterialStatusById/${id}`,
     method: "get",
   });
-  
- 
 }
 
 export async function upadateByStatusCustomer<T>(id: string) {
@@ -122,8 +126,6 @@ export async function editGameMode<T>(id: string) {
     method: "patch",
   });
 }
-
-
 
 export async function createGameMode<T>(data: any) {
   return ApiService.fetchData<T>({
@@ -166,9 +168,9 @@ export function deleteGameMode() {
   return "/adminGame/deleteGameMode";
 }
 export async function editCustomerBilling<T>(data: any) {
-    return ApiService.fetchData<T>({
-        url: "/inventoryApp/editCustomer",
-        method: "patch",
-        data: data, 
-    });
+  return ApiService.fetchData<T>({
+    url: "/inventoryApp/editCustomer",
+    method: "patch",
+    data: data,
+  });
 }
