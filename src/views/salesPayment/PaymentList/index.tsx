@@ -12,6 +12,7 @@ type LedgerRow = {
   monthKey: string;
   description: string;
   folio: string;
+  billNo?: string | number;
   debit: number;
   credit: number;
   balance: number;
@@ -28,15 +29,15 @@ const yearOptions = Array.from({ length: 8 }, (_, index) => {
 
 const monthOptions = [
   { value: "", label: "All Months" },
-  { value: "01", label: "January" },
-  { value: "02", label: "February" },
-  { value: "03", label: "March" },
-  { value: "04", label: "April" },
-  { value: "05", label: "May" },
-  { value: "06", label: "June" },
-  { value: "07", label: "July" },
-  { value: "08", label: "August" },
-  { value: "09", label: "September" },
+  { value: "1", label: "January" },
+  { value: "2", label: "February" },
+  { value: "3", label: "March" },
+  { value: "4", label: "April" },
+  { value: "5", label: "May" },
+  { value: "6", label: "June" },
+  { value: "7", label: "July" },
+  { value: "8", label: "August" },
+  { value: "9", label: "September" },
   { value: "10", label: "October" },
   { value: "11", label: "November" },
   { value: "12", label: "December" },
@@ -57,22 +58,14 @@ const formatAmount = (amount: number) => {
   });
 };
 
-const getLedgerMonth = (item: LedgerRow) => {
-  const sourceDate = item?.date || item?.monthKey;
+const getRowType = (item: LedgerRow, index: number, rows: LedgerRow[]) => {
+  const description = String(item?.description || "").toLowerCase();
 
-  if (!sourceDate) return "";
+  if (index === 0 || description.includes("opening balance")) return "opening";
+  if (index === rows.length - 1 || description.includes("final total"))
+    return "final";
 
-  const monthKeyMatch = String(sourceDate).match(/^\d{4}-(\d{2})/);
-
-  if (monthKeyMatch) {
-    return monthKeyMatch[1];
-  }
-
-  const date = new Date(sourceDate);
-
-  if (Number.isNaN(date.getTime())) return "";
-
-  return String(date.getMonth() + 1).padStart(2, "0");
+  return "normal";
 };
 
 const PaymentList = () => {
@@ -102,17 +95,17 @@ const PaymentList = () => {
     return monthOptions.find((item) => item.value === selectedMonth);
   }, [selectedMonth]);
 
-  const filteredLedgerData = useMemo(() => {
-    if (!selectedMonth) return ledgerData;
-
-    return ledgerData.filter((item) => getLedgerMonth(item) === selectedMonth);
-  }, [ledgerData, selectedMonth]);
-
   const selectedPeriodLabel = useMemo(() => {
-    const monthLabel = selectedMonthOption?.value ? `${selectedMonthOption.label} ` : "";
+    const monthLabel = selectedMonthOption?.value
+      ? `${selectedMonthOption.label} `
+      : "";
 
     return `${monthLabel}${selectedYear}`;
   }, [selectedMonthOption, selectedYear]);
+
+  const openingRow = ledgerData[0];
+  const finalRow = ledgerData[ledgerData.length - 1];
+  const hasLedgerRows = ledgerData.length > 0;
 
   const fetchLedger = async () => {
     try {
@@ -120,6 +113,7 @@ const PaymentList = () => {
 
       const response = await getSalesLedgerYearly({
         year: selectedYear,
+        month: selectedMonth || undefined,
         userType,
         userId,
         phoneNumber,
@@ -136,7 +130,7 @@ const PaymentList = () => {
 
   useEffect(() => {
     fetchLedger();
-  }, [selectedYear, userType, userId, phoneNumber, billNo]);
+  }, [selectedYear, selectedMonth, userType, userId, phoneNumber, billNo]);
 
   const handleDownloadLedgerPdf = async () => {
     let element: HTMLDivElement | null = null;
@@ -144,7 +138,9 @@ const PaymentList = () => {
     try {
       setDownloadingPdf(true);
 
-      const accountName = userName ? `${userName} Sales Ledger` : "Sales Ledger";
+      const accountName = userName
+        ? `${userName} Sales Ledger`
+        : "Sales Ledger";
       const reportType = selectedMonth ? "monthly" : "yearly";
       const safeAccountName = accountName
         .toLowerCase()
@@ -154,24 +150,31 @@ const PaymentList = () => {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")}.pdf`;
 
-      const rows = filteredLedgerData.length
-        ? filteredLedgerData
-            .map(
-              (item) => `
-                <tr>
+      const rows = ledgerData.length
+        ? ledgerData
+            .map((item, index) => {
+              const rowType = getRowType(item, index, ledgerData);
+
+              return `
+                <tr class="${rowType === "normal" ? "" : `${rowType}-row`}">
                   <td>${formatDate(item?.date || item?.monthKey)}</td>
                   <td>${item.description || "-"}</td>
                   <td>${item.folio || "-"}</td>
-                  <td class="amount">${item.debit ? formatAmount(item.debit) : "-"}</td>
-                  <td class="amount">${item.credit ? formatAmount(item.credit) : "-"}</td>
+                  <td>${item.billNo || "-"}</td>
+                  <td class="amount">${
+                    item.debit ? formatAmount(item.debit) : "-"
+                  }</td>
+                  <td class="amount">${
+                    item.credit ? formatAmount(item.credit) : "-"
+                  }</td>
                   <td class="amount">${formatAmount(item.balance)}</td>
                 </tr>
-              `
-            )
+              `;
+            })
             .join("")
         : `
           <tr>
-            <td colspan="6" class="empty">No ledger data found</td>
+            <td colspan="7" class="empty">No ledger data found</td>
           </tr>
         `;
 
@@ -191,6 +194,7 @@ const PaymentList = () => {
                 <th>Date</th>
                 <th>Description</th>
                 <th>Folio</th>
+                <th>Bill No</th>
                 <th>Debit</th>
                 <th>Credit</th>
                 <th>Balance</th>
@@ -277,6 +281,17 @@ const PaymentList = () => {
           text-align: center;
           padding: 16px;
         }
+
+        .ledger-table .opening-row td {
+          background: #f8fafc;
+          font-weight: 700;
+        }
+
+        .ledger-table .final-row td {
+          background: #eef4ff;
+          border-top: 2px solid #2563eb;
+          font-weight: 700;
+        }
       `;
 
       element.prepend(style);
@@ -316,12 +331,14 @@ const PaymentList = () => {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h3>Sales Ledger</h3>
+          <h3 className="text-gray-900">Sales Ledger</h3>
           <p className="text-sm text-gray-500 mt-1">
             {userName
-              ? `${userName} ${selectedMonth ? "monthly" : "yearly"} ledger report`
+              ? `${userName} ${
+                  selectedMonth ? "monthly" : "yearly"
+                } ledger report`
               : `${selectedMonth ? "Monthly" : "Yearly"} ledger report`}
           </p>
         </div>
@@ -363,41 +380,131 @@ const PaymentList = () => {
         </div>
       </div>
 
-      <Table>
-        <THead>
-          <Tr>
-            <Th>Date</Th>
-            <Th>Description</Th>
-            <Th>Folio</Th>
-            <Th>Debit</Th>
-            <Th>Credit</Th>
-            <Th>Balance</Th>
-          </Tr>
-        </THead>
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="rounded border border-gray-200 bg-white px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Opening Balance
+          </p>
+          <p className="mt-1 text-lg font-bold text-gray-900">
+            {hasLedgerRows ? formatAmount(openingRow?.balance) : "0.00"}
+          </p>
+        </div>
+        <div className="rounded border border-gray-200 bg-white px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Total Debit
+          </p>
+          <p className="mt-1 text-lg font-bold text-red-600">
+            {hasLedgerRows ? formatAmount(finalRow?.debit) : "0.00"}
+          </p>
+        </div>
+        <div className="rounded border border-gray-200 bg-white px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Closing Balance
+          </p>
+          <p className="mt-1 text-lg font-bold text-blue-700">
+            {hasLedgerRows ? formatAmount(finalRow?.balance) : "0.00"}
+          </p>
+        </div>
+      </div>
 
-        <TBody>
-          {loading ? (
-            <Tr>
-              <Td colSpan={6}>Loading...</Td>
+      <div className="rounded border border-gray-200 bg-white">
+        <div className="border-b border-gray-200 px-4 py-3">
+          <p className="text-sm font-semibold text-gray-900">
+            Balance Sheet Statement
+          </p>
+          <p className="text-xs text-gray-500">{selectedPeriodLabel}</p>
+        </div>
+
+        <Table className="w-full table-fixed" hoverable={false}>
+          <colgroup>
+            <col className="w-[12%]" />
+            <col className="w-[28%]" />
+            <col className="w-[8%]" />
+            <col className="w-[10%]" />
+            <col className="w-[14%]" />
+            <col className="w-[14%]" />
+            <col className="w-[14%]" />
+          </colgroup>
+
+          <THead>
+            <Tr className="bg-gray-50">
+              <Th className="!text-left text-xs uppercase tracking-wide text-gray-500">
+                Date
+              </Th>
+              <Th className="!text-left text-xs uppercase tracking-wide text-gray-500">
+                Description
+              </Th>
+              <Th className="!text-center text-xs uppercase tracking-wide text-gray-500">
+                Folio
+              </Th>
+              <Th className="!text-center text-xs uppercase tracking-wide text-gray-500">
+                Bill No
+              </Th>
+              <Th className="!text-right text-xs uppercase tracking-wide text-gray-500">
+                Debit
+              </Th>
+              <Th className="!text-right text-xs uppercase tracking-wide text-gray-500">
+                Credit
+              </Th>
+              <Th className="!text-right text-xs uppercase tracking-wide text-gray-500">
+                Balance
+              </Th>
             </Tr>
-          ) : filteredLedgerData.length > 0 ? (
-            filteredLedgerData.map((item, index) => (
-              <Tr key={index}>
-                <Td>{formatDate(item?.date || item?.monthKey)}</Td>
-                <Td>{item.description || "-"}</Td>
-                <Td>{item.folio || "-"}</Td>
-                <Td>{item.debit ? formatAmount(item.debit) : "-"}</Td>
-                <Td>{item.credit ? formatAmount(item.credit) : "-"}</Td>
-                <Td>{formatAmount(item.balance)}</Td>
+          </THead>
+
+          <TBody>
+            {loading ? (
+              <Tr>
+                <Td colSpan={7} className="py-8 text-center text-gray-500">
+                  Loading ledger...
+                </Td>
               </Tr>
-            ))
-          ) : (
-            <Tr>
-              <Td colSpan={6}>No ledger data found for {selectedPeriodLabel}</Td>
-            </Tr>
-          )}
-        </TBody>
-      </Table>
+            ) : ledgerData.length > 0 ? (
+              ledgerData.map((item, index) => {
+                const rowType = getRowType(item, index, ledgerData);
+                const rowClassName =
+                  rowType === "opening"
+                    ? "bg-gray-50 font-semibold text-gray-900"
+                    : rowType === "final"
+                      ? "border-t-2 border-blue-600 bg-blue-50 font-bold text-gray-900"
+                      : "text-gray-700";
+
+                return (
+                  <Tr key={index} className={rowClassName}>
+                    <Td className="whitespace-nowrap !text-left text-gray-900">
+                      {formatDate(item?.date || item?.monthKey)}
+                    </Td>
+                    <Td className="truncate !text-left">
+                      {item.description || "-"}
+                    </Td>
+                    <Td className="!text-center text-gray-700">
+                      {item.folio || "-"}
+                    </Td>
+                    <Td className="!text-center text-gray-700">
+                      {item.billNo || "-"}
+                    </Td>
+                    <Td className="!text-right font-medium tabular-nums text-red-600">
+                      {item.debit ? formatAmount(item.debit) : "-"}
+                    </Td>
+                    <Td className="!text-right font-medium tabular-nums text-emerald-700">
+                      {item.credit ? formatAmount(item.credit) : "-"}
+                    </Td>
+                    <Td className="!text-right font-semibold tabular-nums text-blue-700">
+                      {formatAmount(item.balance)}
+                    </Td>
+                  </Tr>
+                );
+              })
+            ) : (
+              <Tr>
+                <Td colSpan={7} className="py-8 text-center text-gray-500">
+                  No ledger data found for {selectedPeriodLabel}
+                </Td>
+              </Tr>
+            )}
+          </TBody>
+        </Table>
+      </div>
     </div>
   );
 };
