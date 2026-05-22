@@ -78,6 +78,16 @@ const navigationConfig: NavigationTree[] = [
     subMenu: [],
   },
   {
+    key: "create-sales-payment",
+    path: "/create-sales-payment",
+    title: "Receive Payment",
+    translateKey: "receivePayment",
+    icon: "payemnt",
+    type: NAV_ITEM_TYPE_ITEM,
+    authority: [],
+    subMenu: [],
+  },
+  {
     key: "extrudingAccount",
     path: "/extrudingAccount",
     title: "Extruding Account",

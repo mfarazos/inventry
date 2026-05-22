@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import Button from "@/components/ui/Button";
@@ -28,6 +29,22 @@ type PaymentSalesFormProps = {
   userName?: string;
   userId?: string;
   userType?: string;
+  customerOptions?: Array<{
+    _id?: string;
+    clientName?: string;
+    phoneNumber?: string;
+    billNo?: string;
+  }>;
+  customerLoading?: boolean;
+  lockClientName?: boolean;
+  onCustomerSelect?: (customer: {
+    _id?: string;
+    clientName?: string;
+    phoneNumber?: string;
+    billNo?: string;
+  }) => void;
+  onCustomerClear?: () => void;
+  onCustomerSearch?: (search: string) => void;
   onFormSubmit: (values: FormModel, setSubmitting: SetSubmitting) => void;
   onDiscard?: () => void;
 };
@@ -50,9 +67,17 @@ const validationSchema = Yup.object().shape({
 const PaymentSalesForm = ({
   type,
   initialData,
+  customerOptions = [],
+  customerLoading = false,
+  lockClientName = false,
+  onCustomerSelect,
+  onCustomerClear,
+  onCustomerSearch,
   onFormSubmit,
   onDiscard,
 }: PaymentSalesFormProps) => {
+  const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
+
   const defaultValues: FormModel = {
     userId: "",
     userType: "walkingCustomer",
@@ -76,12 +101,29 @@ const PaymentSalesForm = ({
         onFormSubmit(values, setSubmitting);
       }}
     >
-      {({ values, touched, errors, isSubmitting, setFieldValue }) => (
-        <Form>
-          <FormContainer>
-            <h3 className="mb-6">
-              {type === "new" ? "Receive Sales Payment" : "Edit Sales Payment"}
-            </h3>
+      {({ values, touched, errors, isSubmitting, setFieldValue }) => {
+        const filteredCustomers = (() => {
+          const search = String(values.clientName || "").trim().toLowerCase();
+
+          if (!search) return [];
+
+          return customerOptions
+            .filter((customer) =>
+              [customer.clientName, customer.phoneNumber, customer.billNo]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase()
+                .includes(search),
+            )
+            .slice(0, 8);
+        })();
+
+        return (
+          <Form>
+            <FormContainer>
+              <h3 className="mb-6">
+                {type === "new" ? "Receive Sales Payment" : "Edit Sales Payment"}
+              </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormItem
@@ -89,12 +131,74 @@ const PaymentSalesForm = ({
                 invalid={Boolean(errors.clientName && touched.clientName)}
                 errorMessage={errors.clientName}
               >
-                <Field
-                  type="text"
-                  name="clientName"
-                  placeholder="Client Name"
-                  component={Input}
-                />
+                <div className="relative">
+                  <Input
+                    type="text"
+                    name="clientName"
+                    autoComplete="off"
+                    placeholder="Client Name"
+                    value={values.clientName || ""}
+                    readOnly={lockClientName}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+
+                      setFieldValue("clientName", nextValue);
+                      if (!lockClientName) {
+                        setFieldValue("userId", "");
+                        onCustomerClear?.();
+                        onCustomerSearch?.(nextValue);
+                        setShowCustomerSuggestions(Boolean(nextValue.trim()));
+                      }
+                    }}
+                    onFocus={() => {
+                      if (!lockClientName && String(values.clientName || "").trim()) {
+                        setShowCustomerSuggestions(true);
+                      }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowCustomerSuggestions(false), 200);
+                    }}
+                  />
+
+                  {showCustomerSuggestions && !lockClientName && String(values.clientName || "").trim() && (
+                    <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded border border-gray-200 bg-white shadow-lg">
+                      {customerLoading ? (
+                        <div className="px-3 py-2 text-sm text-gray-500">
+                          Searching customers...
+                        </div>
+                      ) : filteredCustomers.length > 0 ? (
+                        filteredCustomers.map((customer, index) => (
+                          <button
+                            key={`${customer._id || customer.phoneNumber || customer.clientName}-${index}`}
+                            type="button"
+                            className="w-full px-3 py-2 text-left transition hover:bg-gray-100"
+                            onMouseDown={() => {
+                              setFieldValue("clientName", customer.clientName || "");
+                              setFieldValue("userId", customer._id || "");
+                              setFieldValue("phoneNumber", customer.phoneNumber || "");
+                              setFieldValue("billNo", customer.billNo || "");
+                              onCustomerSelect?.(customer);
+                              setShowCustomerSuggestions(false);
+                            }}
+                          >
+                            <div className="font-medium text-gray-800">
+                              {customer.clientName || "Customer"}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {[customer.phoneNumber, customer.billNo && `Bill No: ${customer.billNo}`]
+                                .filter(Boolean)
+                                .join(" | ")}
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-sm text-gray-500">
+                          No customer found
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </FormItem>
 
               <FormItem label="Date" invalid={Boolean(errors.date && touched.date)} errorMessage={errors.date}>
@@ -168,9 +272,10 @@ const PaymentSalesForm = ({
                 {type === "new" ? "Receive Payment" : "Update Payment"}
               </Button>
             </div>
-          </FormContainer>
-        </Form>
-      )}
+            </FormContainer>
+          </Form>
+        );
+      }}
     </Formik>
   );
 };
