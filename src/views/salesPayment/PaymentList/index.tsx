@@ -163,6 +163,7 @@ const PaymentList = () => {
         userId,
         phoneNumber,
         billNo,
+        _t: Date.now(),
       });
 
       setLedgerData(response?.data?.data || []);
@@ -202,8 +203,8 @@ const PaymentList = () => {
         { placement: "top-center" },
       );
 
+      await fetchLedger();
       setEditingPayment(null);
-      fetchLedger();
     } catch (error) {
       console.log("Edit sales payment error", error);
     } finally {
@@ -229,8 +230,8 @@ const PaymentList = () => {
         { placement: "top-center" },
       );
 
+      await fetchLedger();
       setDeletingPayment(null);
-      fetchLedger();
     } catch (error) {
       console.log("Delete sales payment error", error);
     } finally {
@@ -608,15 +609,16 @@ const PaymentList = () => {
                           <Button
                             size="xs"
                             type="button"
-                            variant="twoTone"
+                            variant="default"
+                            className="!border-slate-300 !bg-slate-100 !text-slate-700 !shadow-none hover:!border-slate-400 hover:!bg-slate-200 hover:!text-slate-900"
                             icon={<HiOutlinePencil />}
                             onClick={() => setEditingPayment(item)}
                           />
                           <Button
                             size="xs"
                             type="button"
-                            variant="twoTone"
-                            color="red-600"
+                            variant="default"
+                            className="!border-rose-200 !bg-rose-100 !text-rose-700 !shadow-none hover:!border-rose-300 hover:!bg-rose-200 hover:!text-rose-800"
                             icon={<HiOutlineTrash />}
                             loading={deletingPaymentId === item.paymentId}
                             onClick={() => setDeletingPayment(item)}
