@@ -213,6 +213,59 @@ import {
           </div>
         </div>
 
+        <div class="summary-section">
+          <h2 class="summary-title">Summary</h2>
+
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>stock purchase</th>
+                <th>Pure</th>
+                <th>Mixing</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Opening balance</td>
+                <td>${openingPure.toFixed(2)}</td>
+                <td>${openingMixing.toFixed(2)}</td>
+                <td>${(openingPure + openingMixing).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>Total dana received by party</td>
+                <td>${receivedPure.toFixed(2)}</td>
+                <td>${receivedMixing.toFixed(2)}</td>
+                <td>${(receivedPure + receivedMixing).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>Total dana received + opening balance</td>
+                <td>${receivedOpeningPure.toFixed(2)}</td>
+                <td>${receivedOpeningMixing.toFixed(2)}</td>
+                <td>${(receivedOpeningPure + receivedOpeningMixing).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>Total dana consumption</td>
+                <td>${consumptionPure.toFixed(2)}</td>
+                <td>${consumptionMixing.toFixed(2)}</td>
+                <td>${(consumptionPure + consumptionMixing).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>Closing Balance</td>
+                <td>${closingPure.toFixed(2)}</td>
+                <td>${closingMixing.toFixed(2)}</td>
+                <td>${(closingPure + closingMixing).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>Bags</td>
+                <td>-</td>
+                <td>-</td>
+                <td>${totalBags}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <table class="records-table">
           <thead>
             <tr>
@@ -234,57 +287,6 @@ import {
             ${recordsRows}
           </tbody>
         </table>
-
-        <h2 class="summary-title">Summary</h2>
-
-        <table class="summary-table">
-          <thead>
-            <tr>
-              <th>stock purchase</th>
-              <th>Pure</th>
-              <th>Mixing</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Opening balance</td>
-              <td>${openingPure.toFixed(2)}</td>
-              <td>${openingMixing.toFixed(2)}</td>
-              <td>${(openingPure + openingMixing).toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td>Total dana received by party</td>
-              <td>${receivedPure.toFixed(2)}</td>
-              <td>${receivedMixing.toFixed(2)}</td>
-              <td>${(receivedPure + receivedMixing).toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td>Total dana received + opening balance</td>
-              <td>${receivedOpeningPure.toFixed(2)}</td>
-              <td>${receivedOpeningMixing.toFixed(2)}</td>
-              <td>${(receivedOpeningPure + receivedOpeningMixing).toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td>Total dana consumption</td>
-              <td>${consumptionPure.toFixed(2)}</td>
-              <td>${consumptionMixing.toFixed(2)}</td>
-              <td>${(consumptionPure + consumptionMixing).toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td>Closing Balance</td>
-              <td>${closingPure.toFixed(2)}</td>
-              <td>${closingMixing.toFixed(2)}</td>
-              <td>${(closingPure + closingMixing).toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td>Bags</td>
-              <td>-</td>
-              <td>-</td>
-              <td>${totalBags}</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     `
 
@@ -304,7 +306,9 @@ import {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 30px;
+        margin-bottom: 18px;
+        break-inside: avoid;
+        page-break-inside: avoid;
       }
 
       .top-header h1 {
@@ -324,9 +328,18 @@ import {
         border-collapse: collapse;
       }
 
+      thead {
+        display: table-header-group;
+      }
+
+      tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
       .records-table {
         font-size: 8px;
-        margin-bottom: 28px;
+        margin-top: 22px;
         table-layout: fixed;
       }
 
@@ -356,12 +369,20 @@ import {
         text-align: center;
         font-size: 24px;
         font-weight: 700;
-        margin: 20px 0;
+        margin: 0 0 12px;
+      }
+
+      .summary-section {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        margin-bottom: 18px;
       }
 
       .summary-table {
         font-size: 13px;
         table-layout: fixed;
+        break-inside: avoid;
+        page-break-inside: avoid;
       }
 
       .summary-table th,
@@ -407,6 +428,10 @@ import {
           unit: 'in',
           format: 'a4',
           orientation: 'landscape',
+        },
+        pagebreak: {
+          mode: ['css', 'legacy'],
+          avoid: ['tr', '.summary-section'],
         },
       })
       .save()
