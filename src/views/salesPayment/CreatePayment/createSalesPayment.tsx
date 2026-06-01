@@ -101,6 +101,9 @@ const CreateSalesPayment = () => {
             search: debouncedCustomerSearch,
             page: 1,
             limit: 100,
+            ...(selectedUserType === "walkingCustomer" && {
+              groupby_name: true,
+            }),
           },
         });
 
