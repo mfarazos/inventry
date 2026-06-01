@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ApiResponse } from "@/@types/apiResponse";
 import { OnSortParam } from "@/components/shared";
 import ApiService from "@/services/ApiService";
@@ -25,6 +25,7 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
   const [sort, setSort] = useState<OnSortParam | null>(null);
   const [query, setQuery] = useState<string>("");
   const [filter, setFilterState] = useState<FilterType>(null);
+  const requestIdRef = useRef(0);
 
   const setFilter = (filters: FilterType) => {
     setFilterState(filters);
@@ -32,6 +33,9 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
   };
   // fetch api
   const fetchDataApi = async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+
     // set loading true
     setLoading(true);
 
@@ -64,6 +68,10 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
       // for testing
       await new Promise((resolve) => setTimeout(resolve, 300));
 
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
       // set data in state
       setLoading(false);
       setData(result.data.data.data);
@@ -74,6 +82,10 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
       setPageSize(result.data.data?.page?.limit ?? 10);
       setTotal(result.data.data?.page?.totalDocs ?? 0);
     } catch (error) {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
       setData([]);
       setWeightData({});
       setbillData([]);

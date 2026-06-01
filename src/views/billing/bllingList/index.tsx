@@ -556,10 +556,19 @@ export default function CustomerList() {
     setIsWhatsAppDialogOpen(true);
   };
 
+  const selectedBillNo = billData?.[0]?.billNo || "";
+
   useEffect(() => {
+    const shouldFilterByBillNo = productType === "mergeBill";
+    const billNoFilter = shouldFilterByBillNo ? selectedBillNo : "";
+
+    if (shouldFilterByBillNo && !billNoFilter) {
+      return;
+    }
+
     if (userId && userType) {
       setFilter({
-        billNo: productType === "mergeBill" ? billData?.[0]?.billNo : "",
+        billNo: billNoFilter,
         product: productType,
         month: selectedMonth,
         userId,
@@ -567,14 +576,14 @@ export default function CustomerList() {
       });
     } else {
       setFilter({
-        billNo: productType === "mergeBill" ? billData?.[0]?.billNo : "",
+        billNo: billNoFilter,
         product: productType,
         month: selectedMonth,
         userType: "walkingCustomer",
         phoneNumber,
       });
     }
-  }, [productType, selectedMonth, userId, userType, phoneNumber]);
+  }, [productType, selectedBillNo, selectedMonth, userId, userType, phoneNumber]);
 
   const onViewOpen = (img: string) => {
     setSelectedImg(img);
@@ -618,8 +627,7 @@ export default function CustomerList() {
   );
 
   const onChangeDropDown = (itemSelected: string) => {
-    console.log("faraz1", itemSelected);
-    setProductType(itemSelected);
+    setProductType(itemSelected.trim());
   };
 
   const onDelete = useCallback(
@@ -1108,10 +1116,10 @@ export default function CustomerList() {
           {...(shouldShowWeightData && { weightData })}
           billData={billData}
           dropDownOptions={[
-            { value: "Bill ", label: "Bill" },
-            { value: "mergeBill", label: " Merge Bill " },
+            { value: "Bill", label: "Bill" },
+            { value: "mergeBill", label: "Merge Bill" },
           ]}
-          dropDownSelectedValue={"Bill"}
+          dropDownSelectedValue={productType}
           onChangeDropDown={onChangeDropDown}
           onChangeMonth={(m) => setSelectedMonth(m)}
           selectedMonth={selectedMonth}
