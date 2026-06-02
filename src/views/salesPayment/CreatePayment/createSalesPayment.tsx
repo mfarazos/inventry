@@ -250,6 +250,7 @@ const CreateSalesPayment = () => {
           userType: activeUserType,
           phoneNumber: activePhoneNumber,
           billNo: activeBillNo,
+          dueOnDate: "",
           folio: "",
           date: new Date().toISOString().slice(0, 10),
           amount: 0,

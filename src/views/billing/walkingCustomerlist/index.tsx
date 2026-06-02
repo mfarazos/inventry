@@ -11,6 +11,7 @@ import {
     HiEye,
     HiLockClosed,
     HiLockOpen,
+    HiOutlineSearch,
     HiOutlinePencil,
     HiOutlineTrash,
     HiPlusCircle,
@@ -18,7 +19,6 @@ import {
   import { useCallback, useEffect, useMemo, useRef, useState } from "react";
   import { StoreItem } from "@/@types/store";
   import useListApi from "@/utils/hooks/useListApi";
-  import HeaderContent from "@/components/shared/HeaderContent";
   import {
     deleteCustomers,
     deleteGameMode,
@@ -27,7 +27,7 @@ import {
   } from "@/services/GameManagement";
   import CustomConfirmDialog from "@/components/shared/CustomConfirmDialog";
   import { storeItemTypesOptions } from "@/configs/dropdown.config";
-  import { Avatar, Button, Dialog } from "@/components/ui";
+  import { Avatar, Button, Dialog, Input } from "@/components/ui";
   import { FaLock, FaLockOpen, FaUnlockAlt } from "react-icons/fa";
   import Swal from "sweetalert2";
   import { handleHttpReq } from "@/utils/HandleHttp";
@@ -71,10 +71,22 @@ import {
     const [selectedImg, setSelectedImg] = useState<string>({} as string);
     const [productType, setProductType] = useState("poleythene");
     const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+    const [customerFilterType, setCustomerFilterType] = useState<"month" | "all">("all");
 
     useEffect(() => {
-      setFilter({product: productType, month: selectedMonth })
-    },[productType, selectedMonth])
+      if (customerFilterType === "all") {
+        setFilter({
+          product: productType,
+          groupby_name: true,
+        });
+        return;
+      }
+
+      setFilter({
+        product: productType,
+        month: selectedMonth,
+      });
+    }, [customerFilterType, productType, selectedMonth])
   
     const onViewOpen = (img: string) => {
       setSelectedImg(img);
@@ -100,6 +112,10 @@ import {
     const onChangeMonth = (itemSelected: string) => {
       console.log("faraz1", itemSelected)
       setSelectedMonth(itemSelected);
+    };
+
+    const onChangeCustomerFilter = (itemSelected: string) => {
+      setCustomerFilterType(itemSelected === "all" ? "all" : "month");
     };
   
     const onDelete = useCallback(
@@ -152,25 +168,15 @@ import {
         
           
 
-       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "15px", marginTop: "10px" }}>
+       <div className="flex flex-wrap items-center justify-end gap-2">
   
   <Button
     onClick={() => handleNavigate("/showbilling", { userType: "walkingCustomer", phoneNumber: phoneNumber, userName: clientName })}
     block
-    variant="solid"
+    variant="default"
     size="sm"
     icon={<HiPlusCircle />}
-    style={{
-      backgroundColor: "#6a5acd",
-      color: "white",
-      padding: "8px 20px",
-      borderRadius: "6px",
-      fontSize: "14px",
-      cursor: "pointer",
-      transition: "all 0.3s ease",
-    }}
-    onMouseEnter={(e) => (e.target.style.backgroundColor = "#483d8b")}
-    onMouseLeave={(e) => (e.target.style.backgroundColor = "#6a5acd")}
+    className="!border-slate-300 !bg-slate-100 !text-slate-700 !shadow-none hover:!border-slate-400 hover:!bg-slate-200"
   >
     Billing
   </Button>
@@ -178,41 +184,21 @@ import {
   <Button
     onClick={() => handleNavigate("/create-sales-payment", { userType: "walkingCustomer", phoneNumber: phoneNumber, userName: clientName })}
     block
-    variant="solid"
+    variant="default"
     size="sm"
     icon={<HiPlusCircle />}
-    style={{
-      backgroundColor: "#6a5acd",
-      color: "white",
-      padding: "8px 20px",
-      borderRadius: "6px",
-      fontSize: "14px",
-      cursor: "pointer",
-      transition: "all 0.3s ease",
-    }}
-    onMouseEnter={(e) => (e.target.style.backgroundColor = "#483d8b")}
-    onMouseLeave={(e) => (e.target.style.backgroundColor = "#6a5acd")}
+    className="!border-emerald-200 !bg-emerald-50 !text-emerald-700 !shadow-none hover:!border-emerald-300 hover:!bg-emerald-100"
   >
-    Pay Bill
+    Receive Payment
   </Button>
 
   <Button
     onClick={() => handleNavigate("/sales-ledger", { userType: "walkingCustomer", phoneNumber: phoneNumber, userName: clientName })}
     block
-    variant="solid"
+    variant="default"
     size="sm"
     icon={<HiPlusCircle />}
-    style={{
-      backgroundColor: "#6a5acd",
-      color: "white",
-      padding: "8px 20px",
-      borderRadius: "6px",
-      fontSize: "14px",
-      cursor: "pointer",
-      transition: "all 0.3s ease",
-    }}
-    onMouseEnter={(e) => (e.target.style.backgroundColor = "#483d8b")}
-    onMouseLeave={(e) => (e.target.style.backgroundColor = "#6a5acd")}
+    className="!border-blue-200 !bg-blue-50 !text-blue-700 !shadow-none hover:!border-blue-300 hover:!bg-blue-100"
   >
     Ledger
   </Button>
@@ -257,23 +243,60 @@ import {
               alt={"abc"}
             />
           </Dialog>
-          <HeaderContent
-            text="Walking Customers"
-            //addButtonText="Add Customer Data"
-            //isModal={true}
-            //onDialogOpen={handleOpenModal}
-            //addLink="/createtournament"
-            //onChangeDropDown={onChangeDropDown}
-            showSearch={true}
-            //weightData={weightData}
-            
-            onChangeMonth={onChangeMonth}
-           selectedMonth={selectedMonth}
-            isMonthPicket={true}
-            // dropDownSelectedValue={productType}
-            //  dropDownOptions={[{value: "poleythene", label: "Poleythene"},{value: "hydensity", label: "Hydensity"}]}
-            onEditSearch={onEditSearch}
-          />
+          <div className="mb-5 rounded border border-slate-200 bg-white px-4 py-4 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h3 className="text-xl font-semibold text-slate-900">
+                  Walking Customers
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Search customers and open billing, payment, or ledger directly.
+                </p>
+              </div>
+
+              <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:w-auto lg:grid-cols-[240px_170px_170px]">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Search
+                  </label>
+                  <Input
+                    size="sm"
+                    placeholder="Search client name"
+                    prefix={<HiOutlineSearch className="text-lg" />}
+                    onChange={onEditSearch}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    View
+                  </label>
+                  <select
+                    value={customerFilterType}
+                    onChange={(event) => onChangeCustomerFilter(event.target.value)}
+                    className="h-9 w-full rounded border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                  >
+                    <option value="month">Month Wise</option>
+                    <option value="all">All Users</option>
+                  </select>
+                </div>
+
+                {customerFilterType === "month" && (
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Month
+                    </label>
+                    <input
+                      type="month"
+                      value={selectedMonth}
+                      onChange={(event) => onChangeMonth(event.target.value)}
+                      className="h-9 w-full rounded border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
           <DataTable
             ref={tableRef}
             columns={columns}

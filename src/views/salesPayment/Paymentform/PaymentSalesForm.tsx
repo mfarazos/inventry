@@ -16,6 +16,7 @@ export type FormModel = {
   clientName?: string;
   phoneNumber?: string;
   billNo?: string;
+  dueOnDate?: string;
   folio?: string;
   date: string;
   amount: number;
@@ -84,6 +85,7 @@ const PaymentSalesForm = ({
     clientName: "",
     phoneNumber: "",
     billNo: "",
+    dueOnDate: "",
     folio: "",
     date: new Date().toISOString().slice(0, 10),
     amount: 0,
@@ -231,6 +233,14 @@ const PaymentSalesForm = ({
                   type="text"
                   name="billNo"
                   placeholder="Bill No"
+                  component={Input}
+                />
+              </FormItem>
+
+              <FormItem label="Due On Date">
+                <Field
+                  type="date"
+                  name="dueOnDate"
                   component={Input}
                 />
               </FormItem>

@@ -7,7 +7,7 @@ import _ from "lodash";
 import { showNotificationMessage } from "../Helper";
 
 type FilterType = {
-  [key: string]: string;
+  [key: string]: string | number | boolean;
 } | null;
 
 function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: number) {
@@ -52,7 +52,7 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
       sortBy,
       ...filterOptions,
     };
-    if(!params?.product || !params.month){
+    if (!filter) {
       setLoading(false);
       return;
     }

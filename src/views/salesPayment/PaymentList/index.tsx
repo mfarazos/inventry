@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import Table from "@/components/ui/Table";
-import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
 import Dialog from "@/components/ui/Dialog";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
@@ -24,12 +23,24 @@ type LedgerRow = {
   description: string;
   folio: string;
   billNo?: string | number;
+  dueOnDate?: string;
   paymentId?: string;
   paymentMethod?: "cash" | "bank" | "online" | "other";
   entryType?: string;
   debit: number;
   credit: number;
   balance: number;
+};
+
+type LedgerSummary = {
+  year?: number;
+  fromMonth?: string;
+  toMonth?: string;
+  openingBalance?: number;
+  totalDebit?: number;
+  totalCredit?: number;
+  closingBalance?: number;
+  finalBalance?: number;
 };
 
 const yearOptions = Array.from({ length: 8 }, (_, index) => {
@@ -40,22 +51,6 @@ const yearOptions = Array.from({ length: 8 }, (_, index) => {
     label: String(year),
   };
 });
-
-const monthOptions = [
-  { value: "", label: "All Months" },
-  { value: "1", label: "January" },
-  { value: "2", label: "February" },
-  { value: "3", label: "March" },
-  { value: "4", label: "April" },
-  { value: "5", label: "May" },
-  { value: "6", label: "June" },
-  { value: "7", label: "July" },
-  { value: "8", label: "August" },
-  { value: "9", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
-];
 
 const formatDate = (date: string) => {
   if (!date) return "-";
@@ -69,6 +64,18 @@ const formatAmount = (amount: number) => {
   return Number(amount || 0).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+  });
+};
+
+const formatMonthLabel = (monthValue?: string) => {
+  if (!monthValue) return "";
+
+  const date = new Date(`${monthValue}-01T00:00:00`);
+  if (Number.isNaN(date.getTime())) return monthValue;
+
+  return date.toLocaleDateString("en-GB", {
+    month: "short",
+    year: "numeric",
   });
 };
 
@@ -105,8 +112,12 @@ const PaymentList = () => {
   const currentYear = String(new Date().getFullYear());
 
   const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedMonth, setSelectedMonth] = useState("");
+  const [fromMonth, setFromMonth] = useState("");
+  const [toMonth, setToMonth] = useState("");
   const [ledgerData, setLedgerData] = useState<LedgerRow[]>([]);
+  const [ledgerSummary, setLedgerSummary] = useState<LedgerSummary | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [editingPayment, setEditingPayment] = useState<LedgerRow | null>(null);
@@ -115,25 +126,35 @@ const PaymentList = () => {
   );
   const [deletingPaymentId, setDeletingPaymentId] = useState("");
 
-  const selectedYearOption = useMemo(() => {
-    return yearOptions.find((item) => item.value === selectedYear);
-  }, [selectedYear]);
-
-  const selectedMonthOption = useMemo(() => {
-    return monthOptions.find((item) => item.value === selectedMonth);
-  }, [selectedMonth]);
-
   const selectedPeriodLabel = useMemo(() => {
-    const monthLabel = selectedMonthOption?.value
-      ? `${selectedMonthOption.label} `
-      : "";
+    if (fromMonth && toMonth) {
+      return `${formatMonthLabel(fromMonth)} to ${formatMonthLabel(toMonth)}`;
+    }
 
-    return `${monthLabel}${selectedYear}`;
-  }, [selectedMonthOption, selectedYear]);
+    if (toMonth) {
+      return `Jan ${toMonth.slice(0, 4)} to ${formatMonthLabel(toMonth)}`;
+    }
+
+    if (fromMonth) {
+      return `Jan ${fromMonth.slice(0, 4)} to ${formatMonthLabel(fromMonth)}`;
+    }
+
+    return selectedYear;
+  }, [fromMonth, selectedYear, toMonth]);
 
   const openingRow = ledgerData[0];
   const finalRow = ledgerData[ledgerData.length - 1];
   const hasLedgerRows = ledgerData.length > 0;
+  const displayOpeningBalance =
+    ledgerSummary?.openingBalance ?? openingRow?.balance ?? 0;
+  const displayTotalDebit = ledgerSummary?.totalDebit ?? finalRow?.debit ?? 0;
+  const displayTotalCredit =
+    ledgerSummary?.totalCredit ?? finalRow?.credit ?? 0;
+  const displayClosingBalance =
+    ledgerSummary?.closingBalance ??
+    ledgerSummary?.finalBalance ??
+    finalRow?.balance ??
+    0;
 
   const canManagePayment = (item: LedgerRow) => {
     return Boolean(item.paymentId && Number(item.credit || 0) > 0);
@@ -145,6 +166,7 @@ const PaymentList = () => {
     clientName: userName || "",
     phoneNumber: phoneNumber || "",
     billNo: String(item.billNo || billNo || ""),
+    dueOnDate: formatInputDate(item.dueOnDate || ""),
     folio: item.folio || "",
     date: formatInputDate(item.date || item.monthKey),
     amount: Number(item.credit || 0),
@@ -156,9 +178,18 @@ const PaymentList = () => {
     try {
       setLoading(true);
 
+      const monthParams =
+        fromMonth && toMonth
+          ? { fromMonth, toMonth }
+          : fromMonth
+            ? { toMonth: fromMonth }
+            : toMonth
+              ? { toMonth }
+              : {};
+
       const response = await getSalesLedgerYearly({
         year: selectedYear,
-        month: selectedMonth || undefined,
+        ...monthParams,
         userType,
         userId,
         phoneNumber,
@@ -168,8 +199,11 @@ const PaymentList = () => {
       });
 
       setLedgerData(response?.data?.data || []);
+      setLedgerSummary(response?.data?.summary || null);
     } catch (error) {
       console.log("Ledger fetch error", error);
+      setLedgerData([]);
+      setLedgerSummary(null);
     } finally {
       setLoading(false);
     }
@@ -177,7 +211,7 @@ const PaymentList = () => {
 
   useEffect(() => {
     fetchLedger();
-  }, [selectedYear, selectedMonth, userType, userId, phoneNumber, billNo]);
+  }, [selectedYear, fromMonth, toMonth, userType, userId, phoneNumber, billNo]);
 
   const handleEditPayment = async (
     values: FormModel,
@@ -249,7 +283,8 @@ const PaymentList = () => {
       const accountName = userName
         ? `${userName} Sales Ledger`
         : "Sales Ledger";
-      const reportType = selectedMonth ? "monthly" : "yearly";
+      const reportType =
+        fromMonth && toMonth ? "range" : fromMonth || toMonth ? "monthly" : "yearly";
       const safeAccountName = accountName
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
@@ -269,6 +304,7 @@ const PaymentList = () => {
                   <td>${item.description || "-"}</td>
                   <td>${item.folio || "-"}</td>
                   <td>${item.billNo || "-"}</td>
+                  <td>${item.dueOnDate ? formatDate(item.dueOnDate) : "-"}</td>
                   <td class="amount">${
                     item.debit ? formatAmount(item.debit) : "-"
                   }</td>
@@ -282,7 +318,7 @@ const PaymentList = () => {
             .join("")
         : `
           <tr>
-            <td colspan="7" class="empty">No ledger data found</td>
+            <td colspan="8" class="empty">No ledger data found</td>
           </tr>
         `;
 
@@ -303,6 +339,7 @@ const PaymentList = () => {
                 <th>Description</th>
                 <th>Folio</th>
                 <th>Bill No</th>
+                <th>Due On</th>
                 <th>Debit</th>
                 <th>Credit</th>
                 <th>Balance</th>
@@ -445,9 +482,9 @@ const PaymentList = () => {
           <p className="text-sm text-gray-500 mt-1">
             {userName
               ? `${userName} ${
-                  selectedMonth ? "monthly" : "yearly"
+                  fromMonth && toMonth ? "range" : fromMonth || toMonth ? "monthly" : "yearly"
                 } ledger report`
-              : `${selectedMonth ? "Monthly" : "Yearly"} ledger report`}
+              : `${fromMonth && toMonth ? "Range" : fromMonth || toMonth ? "Monthly" : "Yearly"} ledger report`}
           </p>
         </div>
 
@@ -464,37 +501,85 @@ const PaymentList = () => {
             {downloadingPdf ? "Generating PDF..." : "Download Ledger"}
           </button>
 
-          <div className="w-[170px]">
-            <Select
-              placeholder="Select Month"
-              options={monthOptions}
-              value={selectedMonthOption}
-              onChange={(option: any) => {
-                setSelectedMonth(option?.value || "");
+          <div className="w-[160px]">
+            <label className="mb-1 block text-xs font-semibold text-gray-500">
+              From Month
+            </label>
+            <input
+              type="month"
+              value={fromMonth}
+              onChange={(event) => {
+                setFromMonth(event.target.value);
+                if (event.target.value) {
+                  setSelectedYear(event.target.value.slice(0, 4));
+                }
               }}
+              className="h-11 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
             />
           </div>
 
           <div className="w-[160px]">
-            <Select
-              placeholder="Select Year"
-              options={yearOptions}
-              value={selectedYearOption}
-              onChange={(option: any) => {
-                setSelectedYear(option?.value || currentYear);
+            <label className="mb-1 block text-xs font-semibold text-gray-500">
+              To Month
+            </label>
+            <input
+              type="month"
+              value={toMonth}
+              onChange={(event) => {
+                setToMonth(event.target.value);
+                if (event.target.value) {
+                  setSelectedYear(event.target.value.slice(0, 4));
+                }
               }}
+              className="h-11 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
             />
           </div>
+
+          <div className="w-[130px]">
+            <label className="mb-1 block text-xs font-semibold text-gray-500">
+              Year
+            </label>
+            <select
+              value={selectedYear}
+              onChange={(event) => {
+                setSelectedYear(event.target.value || currentYear);
+                setFromMonth("");
+                setToMonth("");
+              }}
+              className="h-11 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+            >
+              {yearOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {(fromMonth || toMonth) && (
+            <Button
+              type="button"
+              variant="default"
+              onClick={() => {
+                setFromMonth("");
+                setToMonth("");
+              }}
+            >
+              Clear Range
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
         <div className="rounded border border-gray-200 bg-white px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
             Opening Balance
           </p>
           <p className="mt-1 text-lg font-bold text-gray-900">
-            {hasLedgerRows ? formatAmount(openingRow?.balance) : "0.00"}
+            {hasLedgerRows || ledgerSummary
+              ? formatAmount(displayOpeningBalance)
+              : "0.00"}
           </p>
         </div>
         <div className="rounded border border-gray-200 bg-white px-4 py-3">
@@ -502,7 +587,19 @@ const PaymentList = () => {
             Total Debit
           </p>
           <p className="mt-1 text-lg font-bold text-red-600">
-            {hasLedgerRows ? formatAmount(finalRow?.debit) : "0.00"}
+            {hasLedgerRows || ledgerSummary
+              ? formatAmount(displayTotalDebit)
+              : "0.00"}
+          </p>
+        </div>
+        <div className="rounded border border-gray-200 bg-white px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Total Credit
+          </p>
+          <p className="mt-1 text-lg font-bold text-emerald-700">
+            {hasLedgerRows || ledgerSummary
+              ? formatAmount(displayTotalCredit)
+              : "0.00"}
           </p>
         </div>
         <div className="rounded border border-gray-200 bg-white px-4 py-3">
@@ -510,7 +607,9 @@ const PaymentList = () => {
             Closing Balance
           </p>
           <p className="mt-1 text-lg font-bold text-blue-700">
-            {hasLedgerRows ? formatAmount(finalRow?.balance) : "0.00"}
+            {hasLedgerRows || ledgerSummary
+              ? formatAmount(displayClosingBalance)
+              : "0.00"}
           </p>
         </div>
       </div>
@@ -529,9 +628,10 @@ const PaymentList = () => {
             <col className="w-[25%]" />
             <col className="w-[8%]" />
             <col className="w-[10%]" />
-            <col className="w-[13%]" />
-            <col className="w-[13%]" />
-            <col className="w-[13%]" />
+            <col className="w-[10%]" />
+            <col className="w-[12%]" />
+            <col className="w-[12%]" />
+            <col className="w-[12%]" />
             <col className="w-[7%]" />
           </colgroup>
 
@@ -548,6 +648,9 @@ const PaymentList = () => {
               </Th>
               <Th className="!text-center text-xs uppercase tracking-wide text-gray-500">
                 Bill No
+              </Th>
+              <Th className="!text-center text-xs uppercase tracking-wide text-gray-500">
+                Due On
               </Th>
               <Th className="!text-right text-xs uppercase tracking-wide text-gray-500">
                 Debit
@@ -567,7 +670,7 @@ const PaymentList = () => {
           <TBody>
             {loading ? (
               <Tr>
-                <Td colSpan={8} className="py-8 text-center text-gray-500">
+                <Td colSpan={9} className="py-8 text-center text-gray-500">
                   Loading ledger...
                 </Td>
               </Tr>
@@ -594,6 +697,9 @@ const PaymentList = () => {
                     </Td>
                     <Td className="!text-center text-gray-700">
                       {item.billNo || "-"}
+                    </Td>
+                    <Td className="!text-center text-gray-700">
+                      {item.dueOnDate ? formatDate(item.dueOnDate) : "-"}
                     </Td>
                     <Td className="!text-right font-medium tabular-nums text-red-600">
                       {item.debit ? formatAmount(item.debit) : "-"}
@@ -634,7 +740,7 @@ const PaymentList = () => {
               })
             ) : (
               <Tr>
-                <Td colSpan={8} className="py-8 text-center text-gray-500">
+                <Td colSpan={9} className="py-8 text-center text-gray-500">
                   No ledger data found for {selectedPeriodLabel}
                 </Td>
               </Tr>
