@@ -33,7 +33,7 @@ export default function CustomerList() {
   const { textTheme } = useThemeClass();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userType, userId, userName, phoneNumber } = location.state || {};
+  const { userType, userId, userName, phoneNumber, ref_no } = location.state || {};
 
   // List API hook
   const listUrl = getCustomerdetails();
@@ -472,6 +472,7 @@ export default function CustomerList() {
         userId: userId,
         userName: userName,
         phoneNumber: phoneNumber,
+        ref_no,
         billNo: billData?.[0]?.billNo,
       },
     });
@@ -581,9 +582,10 @@ export default function CustomerList() {
         month: selectedMonth,
         userType: "walkingCustomer",
         phoneNumber,
+        ref_no,
       });
     }
-  }, [productType, selectedBillNo, selectedMonth, userId, userType, phoneNumber]);
+  }, [productType, selectedBillNo, selectedMonth, userId, userType, phoneNumber, ref_no]);
 
   const onViewOpen = (img: string) => {
     setSelectedImg(img);
@@ -1112,6 +1114,7 @@ export default function CustomerList() {
             userId,
             userName,
             phoneNumber: phoneNumber || "",
+            ref_no,
           }}
           {...(shouldShowWeightData && { weightData })}
           billData={billData}

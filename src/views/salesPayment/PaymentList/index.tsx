@@ -107,6 +107,7 @@ const PaymentList = () => {
     userName,
     phoneNumber,
     billNo,
+    ref_no,
   } = location.state || {};
 
   const currentYear = String(new Date().getFullYear());
@@ -195,6 +196,7 @@ const PaymentList = () => {
         phoneNumber,
         billNo,
         userName,
+        ref_no,
         _t: Date.now(),
       });
 

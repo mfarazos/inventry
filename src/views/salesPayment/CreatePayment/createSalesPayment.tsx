@@ -16,6 +16,7 @@ type CustomerOption = {
   _id?: string;
   clientName?: string;
   phoneNumber?: string;
+  ref_no?: string;
   billNo?: string;
 };
 
@@ -41,6 +42,7 @@ const CreateSalesPayment = () => {
     userId?: string;
     userName?: string;
     phoneNumber?: string;
+    ref_no?: string;
     billNo?: string;
   };
 
@@ -49,6 +51,7 @@ const CreateSalesPayment = () => {
     userId,
     userName,
     phoneNumber,
+    ref_no,
     billNo,
   } = routeState;
 
@@ -57,6 +60,7 @@ const CreateSalesPayment = () => {
     userId ||
     userName ||
     phoneNumber ||
+    ref_no ||
     billNo
   );
 
@@ -125,6 +129,7 @@ const CreateSalesPayment = () => {
       : "";
   const activeUserName = selectedCustomer?.clientName || userName || "";
   const activePhoneNumber = selectedCustomer?.phoneNumber || phoneNumber || "";
+  const activeRefNo = selectedCustomer?.ref_no || ref_no || "";
   const activeBillNo = selectedCustomer?.billNo || billNo || "";
 
   const addPayment = async (data: FormModel) => {
@@ -145,8 +150,20 @@ const CreateSalesPayment = () => {
       userId: activeUserId || data.userId,
       clientName: data.clientName || activeUserName,
       phoneNumber: data.phoneNumber || activePhoneNumber,
+      ref_no: data.ref_no || activeRefNo,
       billNo: data.billNo || activeBillNo,
     };
+
+    if (payload.userType === "walkingCustomer" && !payload.ref_no) {
+      toast.push(
+        <Notification title="Ref No required" type="warning" duration={2500}>
+          Please select a walking customer with ref no before receiving payment.
+        </Notification>,
+        { placement: "top-center" },
+      );
+
+      return null;
+    }
 
     if (payload.userType === "specificCustomer" && !payload.userId) {
       toast.push(
@@ -249,6 +266,7 @@ const CreateSalesPayment = () => {
           userId: activeUserId,
           userType: activeUserType,
           phoneNumber: activePhoneNumber,
+          ref_no: activeRefNo,
           billNo: activeBillNo,
           dueOnDate: "",
           folio: "",

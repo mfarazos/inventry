@@ -15,6 +15,7 @@ export type FormModel = {
   userType: "walkingCustomer" | "specificCustomer";
   clientName?: string;
   phoneNumber?: string;
+  ref_no?: string;
   billNo?: string;
   dueOnDate?: string;
   folio?: string;
@@ -34,6 +35,7 @@ type PaymentSalesFormProps = {
     _id?: string;
     clientName?: string;
     phoneNumber?: string;
+    ref_no?: string;
     billNo?: string;
   }>;
   customerLoading?: boolean;
@@ -42,6 +44,7 @@ type PaymentSalesFormProps = {
     _id?: string;
     clientName?: string;
     phoneNumber?: string;
+    ref_no?: string;
     billNo?: string;
   }) => void;
   onCustomerClear?: () => void;
@@ -84,6 +87,7 @@ const PaymentSalesForm = ({
     userType: "walkingCustomer",
     clientName: "",
     phoneNumber: "",
+    ref_no: "",
     billNo: "",
     dueOnDate: "",
     folio: "",
@@ -111,7 +115,7 @@ const PaymentSalesForm = ({
 
           return customerOptions
             .filter((customer) =>
-              [customer.clientName, customer.phoneNumber, customer.billNo]
+              [customer.clientName, customer.phoneNumber, customer.ref_no, customer.billNo]
                 .filter(Boolean)
                 .join(" ")
                 .toLowerCase()
@@ -147,6 +151,7 @@ const PaymentSalesForm = ({
                       setFieldValue("clientName", nextValue);
                       if (!lockClientName) {
                         setFieldValue("userId", "");
+                        setFieldValue("ref_no", "");
                         onCustomerClear?.();
                         onCustomerSearch?.(nextValue);
                         setShowCustomerSuggestions(Boolean(nextValue.trim()));
@@ -178,6 +183,7 @@ const PaymentSalesForm = ({
                               setFieldValue("clientName", customer.clientName || "");
                               setFieldValue("userId", customer._id || "");
                               setFieldValue("phoneNumber", customer.phoneNumber || "");
+                              setFieldValue("ref_no", customer.ref_no || "");
                               setFieldValue("billNo", customer.billNo || "");
                               onCustomerSelect?.(customer);
                               setShowCustomerSuggestions(false);
@@ -187,7 +193,10 @@ const PaymentSalesForm = ({
                               {customer.clientName || "Customer"}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {[customer.phoneNumber, customer.billNo && `Bill No: ${customer.billNo}`]
+                              {[
+                                customer.ref_no && `Ref No: ${customer.ref_no}`,
+                                customer.billNo && `Bill No: ${customer.billNo}`,
+                              ]
                                 .filter(Boolean)
                                 .join(" | ")}
                             </div>

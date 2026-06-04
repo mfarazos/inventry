@@ -158,7 +158,13 @@ import {
 
     // action button cell
     const actionButtons = (props: CellContext<StoreItem, unknown>) => {
-      const { phoneNumber, clientName } = props.row.original;
+      const { phoneNumber, clientName, ref_no } = props.row.original;
+      const navigateState = {
+        userType: "walkingCustomer",
+        phoneNumber,
+        userName: clientName,
+        ref_no,
+      };
       //   const { isActive } = props.row.original;
   
       return (
@@ -171,7 +177,7 @@ import {
        <div className="flex flex-wrap items-center justify-end gap-2">
   
   <Button
-    onClick={() => handleNavigate("/showbilling", { userType: "walkingCustomer", phoneNumber: phoneNumber, userName: clientName })}
+    onClick={() => handleNavigate("/showbilling", navigateState)}
     block
     variant="default"
     size="sm"
@@ -182,7 +188,7 @@ import {
   </Button>
   
   <Button
-    onClick={() => handleNavigate("/create-sales-payment", { userType: "walkingCustomer", phoneNumber: phoneNumber, userName: clientName })}
+    onClick={() => handleNavigate("/create-sales-payment", navigateState)}
     block
     variant="default"
     size="sm"
@@ -193,7 +199,7 @@ import {
   </Button>
 
   <Button
-    onClick={() => handleNavigate("/sales-ledger", { userType: "walkingCustomer", phoneNumber: phoneNumber, userName: clientName })}
+    onClick={() => handleNavigate("/sales-ledger", navigateState)}
     block
     variant="default"
     size="sm"
@@ -216,6 +222,16 @@ import {
         {
           header: "Client Name",
           accessorKey: "clientName",
+        },
+
+        {
+          header: "Ref No",
+          accessorKey: "ref_no",
+          cell: ({ row: { original } }) => (
+            <span className="font-medium text-slate-700">
+              {original.ref_no || "-"}
+            </span>
+          ),
         },
 
         

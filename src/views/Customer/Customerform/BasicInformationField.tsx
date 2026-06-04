@@ -21,6 +21,7 @@ type FormFieldsName = {
   extraAmount: number;
   totalAmount: number;
   billNo: string;
+  ref_no: string;
   product: string;
   userId: string; 
   userType: string;
@@ -198,18 +199,19 @@ const API_BASE_URL = appConfig.apiPrefix;
               key={`${customer.clientName}-${index}`}
               type="button"
               className="w-full text-left px-3 py-2 hover:bg-gray-100 transition"
-              onMouseDown={() => {
-                setFieldValue("clientName", customer.clientName);
-                setShowSuggestions(false);
-              }}
+            onMouseDown={() => {
+              setFieldValue("clientName", customer.clientName);
+              setFieldValue("ref_no", customer.ref_no || "");
+              setShowSuggestions(false);
+            }}
             >
               <div className="font-medium text-gray-800">
                 {customer.clientName}
               </div>
 
-              {(customer.billNo) && (
+              {(customer.ref_no) && (
                 <div className="text-xs text-gray-500">
-                  {customer.billNo ? `Bill No: ${customer.billNo}` : ""}
+                  {customer.ref_no ? `Ref No: ${customer.ref_no}` : ""}
                   
                 </div>
               )}
@@ -263,6 +265,20 @@ const API_BASE_URL = appConfig.apiPrefix;
 
           </FormItem>
         </div>
+
+        {values.userType === "walkingCustomer" && (
+          <div className="col-span-1">
+            <FormItem label="Ref No">
+              <Field
+                type="string"
+                autoComplete="off"
+                name="ref_no"
+                placeholder="auto generate if empty"
+                component={Input}
+              />
+            </FormItem>
+          </div>
+        )}
 
         <div className="col-span-1">
           <FormItem
