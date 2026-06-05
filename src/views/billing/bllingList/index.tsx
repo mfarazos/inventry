@@ -16,10 +16,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StoreItem } from "@/@types/store";
 import useListApi from "@/utils/hooks/useListApi";
 import HeaderContent from "@/components/shared/HeaderContent";
+import ApiService from "@/services/ApiService";
 import {
   deleteCustomers,
   deleteGameMode,
+  getCategorycustomers,
   getCustomerdetails,
+  getwalkingCustomers,
   upadateByStatusCustomer,
   editCustomerBilling,
 } from "@/services/GameManagement";
@@ -28,6 +31,22 @@ import { Dialog } from "@/components/ui";
 import Swal from "sweetalert2";
 import EditBillingForm from "./editbilling/EditBillingForm";
 import { Action } from "history";
+
+type MergeCustomerOption = {
+  _id?: string;
+  clientName?: string;
+  phoneNumber?: string;
+  ref_no?: string;
+  billNo?: string;
+};
+
+const getResponseRows = (responseData: any): MergeCustomerOption[] => {
+  if (Array.isArray(responseData?.data)) return responseData.data;
+  if (Array.isArray(responseData?.data?.data)) return responseData.data.data;
+  if (Array.isArray(responseData)) return responseData;
+
+  return [];
+};
 
 export default function CustomerList() {
   const { textTheme } = useThemeClass();
@@ -489,6 +508,21 @@ export default function CustomerList() {
   const [currentEditingItem, setCurrentEditingItem] = useState<any>(null);
   const [manualWhatsAppPhone, setManualWhatsAppPhone] = useState("");
   const [isWhatsAppDialogOpen, setIsWhatsAppDialogOpen] = useState(false);
+  const [mergeSearch, setMergeSearch] = useState("");
+  const [debouncedMergeSearch, setDebouncedMergeSearch] = useState("");
+  const [mergeCustomerOptions, setMergeCustomerOptions] = useState<
+    MergeCustomerOption[]
+  >([]);
+  const [selectedMergeCustomer, setSelectedMergeCustomer] =
+    useState<MergeCustomerOption | null>(null);
+  const [mergeCustomerLoading, setMergeCustomerLoading] = useState(false);
+  const [showMergeSuggestions, setShowMergeSuggestions] = useState(false);
+
+  const currentUserType = userType || "walkingCustomer";
+  const mergeTargetType =
+    currentUserType === "specificCustomer"
+      ? "walkingCustomer"
+      : "specificCustomer";
 
   const normalizeWhatsAppPhone = (value: string) => {
     const rawPhone = String(value || "").replace(/\D/g, "");
@@ -557,35 +591,108 @@ export default function CustomerList() {
     setIsWhatsAppDialogOpen(true);
   };
 
-  const selectedBillNo = billData?.[0]?.billNo || "";
+  const billingFilter = useMemo(() => {
+    const baseFilter: Record<string, any> = {
+      product: productType,
+      month: selectedMonth,
+      userType: currentUserType,
+    };
+
+    if (productType === "mergeBill") {
+      if (!selectedMergeCustomer) {
+        return null;
+      }
+
+      return {
+        ...baseFilter,
+        userId:
+          currentUserType === "specificCustomer"
+            ? userId
+            : selectedMergeCustomer._id,
+        ref_no:
+          currentUserType === "walkingCustomer"
+            ? ref_no
+            : selectedMergeCustomer.ref_no,
+      };
+    }
+
+    if (currentUserType === "specificCustomer") {
+      return {
+        ...baseFilter,
+        userId,
+      };
+    }
+
+    return {
+      ...baseFilter,
+      phoneNumber,
+      ref_no,
+    };
+  }, [
+    currentUserType,
+    phoneNumber,
+    productType,
+    ref_no,
+    selectedMergeCustomer,
+    selectedMonth,
+    userId,
+  ]);
 
   useEffect(() => {
-    const shouldFilterByBillNo = productType === "mergeBill";
-    const billNoFilter = shouldFilterByBillNo ? selectedBillNo : "";
+    const timer = setTimeout(() => {
+      setDebouncedMergeSearch(mergeSearch.trim());
+    }, 400);
 
-    if (shouldFilterByBillNo && !billNoFilter) {
+    return () => clearTimeout(timer);
+  }, [mergeSearch]);
+
+  useEffect(() => {
+    if (productType !== "mergeBill" || !debouncedMergeSearch) {
+      setMergeCustomerOptions([]);
+      setMergeCustomerLoading(false);
       return;
     }
 
-    if (userId && userType) {
-      setFilter({
-        billNo: billNoFilter,
-        product: productType,
-        month: selectedMonth,
-        userId,
-        userType,
-      });
-    } else {
-      setFilter({
-        billNo: billNoFilter,
-        product: productType,
-        month: selectedMonth,
-        userType: "walkingCustomer",
-        phoneNumber,
-        ref_no,
-      });
+    const fetchMergeCustomers = async () => {
+      setMergeCustomerLoading(true);
+
+      try {
+        const url =
+          mergeTargetType === "walkingCustomer"
+            ? getwalkingCustomers()
+            : getCategorycustomers();
+        const response = await ApiService.fetchData<any>({
+          url,
+          method: "get",
+          params: {
+            search: debouncedMergeSearch,
+            page: 1,
+            limit: 100,
+            ...(mergeTargetType === "walkingCustomer" && {
+              groupby_name: true,
+            }),
+          },
+        });
+
+        setMergeCustomerOptions(getResponseRows(response.data));
+      } catch {
+        setMergeCustomerOptions([]);
+      } finally {
+        setMergeCustomerLoading(false);
+      }
+    };
+
+    fetchMergeCustomers();
+  }, [debouncedMergeSearch, mergeTargetType, productType]);
+
+  useEffect(() => {
+    if (!billingFilter) {
+      setData([]);
+      return;
     }
-  }, [productType, selectedBillNo, selectedMonth, userId, userType, phoneNumber, ref_no]);
+
+    setFilter(billingFilter);
+  }, [billingFilter, setData, setFilter]);
 
   const onViewOpen = (img: string) => {
     setSelectedImg(img);
@@ -629,7 +736,14 @@ export default function CustomerList() {
   );
 
   const onChangeDropDown = (itemSelected: string) => {
-    setProductType(itemSelected.trim());
+    const nextProductType = itemSelected.trim();
+
+    setProductType(nextProductType);
+    setMergeSearch("");
+    setDebouncedMergeSearch("");
+    setMergeCustomerOptions([]);
+    setSelectedMergeCustomer(null);
+    setShowMergeSuggestions(false);
   };
 
   const onDelete = useCallback(
@@ -995,6 +1109,30 @@ export default function CustomerList() {
     [actionButtons],
   );
 
+  const handleMergeCustomerSelect = (customer: MergeCustomerOption) => {
+    if (mergeTargetType === "walkingCustomer" && !customer.ref_no) {
+      Swal.fire(
+        "Ref No missing",
+        "Selected walking customer does not have ref no.",
+        "warning",
+      );
+      return;
+    }
+
+    if (mergeTargetType === "specificCustomer" && !customer._id) {
+      Swal.fire(
+        "Customer id missing",
+        "Selected specific customer does not have user id.",
+        "warning",
+      );
+      return;
+    }
+
+    setSelectedMergeCustomer(customer);
+    setMergeSearch(customer.clientName || "");
+    setShowMergeSuggestions(false);
+  };
+
   const shouldShowWeightData = !!(
     userType &&
     userId &&
@@ -1128,6 +1266,80 @@ export default function CustomerList() {
           selectedMonth={selectedMonth}
           isMonthPicket
         />
+
+        {productType === "mergeBill" && (
+          <div className="mt-4 rounded border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold text-slate-900">
+                Merge With{" "}
+                {mergeTargetType === "walkingCustomer"
+                  ? "Walking Customer"
+                  : "Specific Customer"}
+              </h4>
+              <p className="mt-1 text-xs text-slate-500">
+                Search and select the customer to include in this merged bill.
+              </p>
+            </div>
+
+            <div className="relative max-w-xl">
+              <input
+                type="text"
+                value={mergeSearch}
+                onFocus={() => {
+                  if (mergeSearch.trim()) {
+                    setShowMergeSuggestions(true);
+                  }
+                }}
+                onChange={(event) => {
+                  setMergeSearch(event.target.value);
+                  setSelectedMergeCustomer(null);
+                  setShowMergeSuggestions(Boolean(event.target.value.trim()));
+                }}
+                placeholder={`Search ${
+                  mergeTargetType === "walkingCustomer"
+                    ? "walking customer"
+                    : "specific customer"
+                }`}
+                className="h-11 w-full rounded border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+              />
+
+              {showMergeSuggestions && mergeSearch.trim() && (
+                <div className="absolute left-0 right-0 z-30 mt-2 max-h-64 overflow-auto rounded border border-slate-200 bg-white shadow-lg">
+                  {mergeCustomerLoading ? (
+                    <div className="px-4 py-3 text-sm text-slate-500">
+                      Searching customers...
+                    </div>
+                  ) : mergeCustomerOptions.length > 0 ? (
+                    mergeCustomerOptions.slice(0, 10).map((customer, index) => (
+                      <button
+                        key={`${customer._id || customer.ref_no || customer.clientName}-${index}`}
+                        type="button"
+                        onMouseDown={() => handleMergeCustomerSelect(customer)}
+                        className="w-full border-b border-slate-100 px-4 py-3 text-left text-sm hover:bg-slate-50 last:border-b-0"
+                      >
+                        <span className="block font-semibold text-slate-800">
+                          {customer.clientName || "Customer"}
+                        </span>
+                        <span className="block text-xs text-slate-500">
+                          {[
+                            customer.ref_no && `Ref No: ${customer.ref_no}`,
+                            customer.billNo && `Bill No: ${customer.billNo}`,
+                          ]
+                            .filter(Boolean)
+                            .join(" | ") || "-"}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-slate-500">
+                      No customer found
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="mt-4">
           <DataTable

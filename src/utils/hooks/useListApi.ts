@@ -27,10 +27,12 @@ function useListApi<T>(listUrl: string, deleteUrl: string, desirePageSize: numbe
   const [filter, setFilterState] = useState<FilterType>(null);
   const requestIdRef = useRef(0);
 
-  const setFilter = (filters: FilterType) => {
-    setFilterState(filters);
+  const setFilter = useCallback((filters: FilterType) => {
+    setFilterState((prevFilter) =>
+      _.isEqual(prevFilter, filters) ? prevFilter : filters,
+    );
     setPageIndex(1);
-  };
+  }, []);
   // fetch api
   const fetchDataApi = async () => {
     const requestId = requestIdRef.current + 1;
