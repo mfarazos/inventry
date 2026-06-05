@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Table from "@/components/ui/Table";
 import Button from "@/components/ui/Button";
 import Dialog from "@/components/ui/Dialog";
@@ -9,8 +9,11 @@ import { useLocation } from "react-router-dom";
 import {
   deleteSalesPayment,
   editSalesPayment,
+  getCategorycustomers,
   getSalesLedgerYearly,
+  getwalkingCustomers,
 } from "@/services/GameManagement";
+import ApiService from "@/services/ApiService";
 import PaymentSalesForm, { FormModel, SetSubmitting } from "../Paymentform";
 import html2pdf from "html2pdf.js/dist/html2pdf.bundle.min.js";
 import { HiOutlinePencil, HiOutlineTrash } from "react-icons/hi";
@@ -41,6 +44,22 @@ type LedgerSummary = {
   totalCredit?: number;
   closingBalance?: number;
   finalBalance?: number;
+};
+
+type MergeCustomerOption = {
+  _id?: string;
+  clientName?: string;
+  phoneNumber?: string;
+  ref_no?: string;
+  billNo?: string;
+};
+
+const getResponseRows = (responseData: any): MergeCustomerOption[] => {
+  if (Array.isArray(responseData?.data)) return responseData.data;
+  if (Array.isArray(responseData?.data?.data)) return responseData.data.data;
+  if (Array.isArray(responseData)) return responseData;
+
+  return [];
 };
 
 const yearOptions = Array.from({ length: 8 }, (_, index) => {
@@ -126,6 +145,23 @@ const PaymentList = () => {
     null,
   );
   const [deletingPaymentId, setDeletingPaymentId] = useState("");
+  const [ledgerType, setLedgerType] = useState("Bill");
+  const [mergeSearch, setMergeSearch] = useState("");
+  const [debouncedMergeSearch, setDebouncedMergeSearch] = useState("");
+  const [mergeCustomerOptions, setMergeCustomerOptions] = useState<
+    MergeCustomerOption[]
+  >([]);
+  const [selectedMergeCustomer, setSelectedMergeCustomer] =
+    useState<MergeCustomerOption | null>(null);
+  const [mergeCustomerLoading, setMergeCustomerLoading] = useState(false);
+  const [showMergeSuggestions, setShowMergeSuggestions] = useState(false);
+
+  const currentUserType = userType || "walkingCustomer";
+  const isMergeLedger = ledgerType === "mergeBill";
+  const mergeTargetType =
+    currentUserType === "specificCustomer"
+      ? "walkingCustomer"
+      : "specificCustomer";
 
   const selectedPeriodLabel = useMemo(() => {
     if (fromMonth && toMonth) {
@@ -166,6 +202,7 @@ const PaymentList = () => {
     userType: userType || "walkingCustomer",
     clientName: userName || "",
     phoneNumber: phoneNumber || "",
+    ref_no: ref_no || "",
     billNo: String(item.billNo || billNo || ""),
     dueOnDate: formatInputDate(item.dueOnDate || ""),
     folio: item.folio || "",
@@ -175,28 +212,82 @@ const PaymentList = () => {
     description: item.description || "Payment received",
   });
 
-  const fetchLedger = async () => {
+  const ledgerRequestParams = useMemo(() => {
+    const monthParams =
+      fromMonth && toMonth
+        ? { fromMonth, toMonth }
+        : fromMonth
+          ? { toMonth: fromMonth }
+          : toMonth
+            ? { toMonth }
+            : {};
+
+    const baseParams: Record<string, any> = {
+      year: selectedYear,
+      ...monthParams,
+      product: ledgerType,
+      userType: currentUserType,
+      billNo,
+      userName,
+    };
+
+    if (isMergeLedger) {
+      if (!selectedMergeCustomer) {
+        return null;
+      }
+
+      return {
+        ...baseParams,
+        userId:
+          currentUserType === "specificCustomer"
+            ? userId
+            : selectedMergeCustomer._id,
+        ref_no:
+          currentUserType === "walkingCustomer"
+            ? ref_no
+            : selectedMergeCustomer.ref_no,
+      };
+    }
+
+    if (currentUserType === "specificCustomer") {
+      return {
+        ...baseParams,
+        userId,
+      };
+    }
+
+    return {
+      ...baseParams,
+      phoneNumber,
+      ref_no,
+    };
+  }, [
+    billNo,
+    currentUserType,
+    fromMonth,
+    isMergeLedger,
+    ledgerType,
+    phoneNumber,
+    ref_no,
+    selectedMergeCustomer,
+    selectedYear,
+    toMonth,
+    userId,
+    userName,
+  ]);
+
+  const fetchLedger = useCallback(async () => {
+    if (!ledgerRequestParams) {
+      setLedgerData([]);
+      setLedgerSummary(null);
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const monthParams =
-        fromMonth && toMonth
-          ? { fromMonth, toMonth }
-          : fromMonth
-            ? { toMonth: fromMonth }
-            : toMonth
-              ? { toMonth }
-              : {};
-
       const response = await getSalesLedgerYearly({
-        year: selectedYear,
-        ...monthParams,
-        userType,
-        userId,
-        phoneNumber,
-        billNo,
-        userName,
-        ref_no,
+        ...ledgerRequestParams,
         _t: Date.now(),
       });
 
@@ -209,11 +300,93 @@ const PaymentList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [ledgerRequestParams]);
 
   useEffect(() => {
     fetchLedger();
-  }, [selectedYear, fromMonth, toMonth, userType, userId, phoneNumber, billNo]);
+  }, [fetchLedger]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedMergeSearch(mergeSearch.trim());
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [mergeSearch]);
+
+  useEffect(() => {
+    if (!isMergeLedger || !debouncedMergeSearch) {
+      setMergeCustomerOptions([]);
+      setMergeCustomerLoading(false);
+      return;
+    }
+
+    const fetchMergeCustomers = async () => {
+      setMergeCustomerLoading(true);
+
+      try {
+        const url =
+          mergeTargetType === "walkingCustomer"
+            ? getwalkingCustomers()
+            : getCategorycustomers();
+        const response = await ApiService.fetchData<any>({
+          url,
+          method: "get",
+          params: {
+            search: debouncedMergeSearch,
+            page: 1,
+            limit: 100,
+            ...(mergeTargetType === "walkingCustomer" && {
+              groupby_name: true,
+            }),
+          },
+        });
+
+        setMergeCustomerOptions(getResponseRows(response.data));
+      } catch {
+        setMergeCustomerOptions([]);
+      } finally {
+        setMergeCustomerLoading(false);
+      }
+    };
+
+    fetchMergeCustomers();
+  }, [debouncedMergeSearch, isMergeLedger, mergeTargetType]);
+
+  const handleLedgerTypeChange = (value: string) => {
+    setLedgerType(value);
+    setMergeSearch("");
+    setDebouncedMergeSearch("");
+    setMergeCustomerOptions([]);
+    setSelectedMergeCustomer(null);
+    setShowMergeSuggestions(false);
+  };
+
+  const handleMergeCustomerSelect = (customer: MergeCustomerOption) => {
+    if (mergeTargetType === "walkingCustomer" && !customer.ref_no) {
+      toast.push(
+        <Notification title="Ref No missing" type="warning" duration={2500}>
+          Selected walking customer does not have ref no.
+        </Notification>,
+        { placement: "top-center" },
+      );
+      return;
+    }
+
+    if (mergeTargetType === "specificCustomer" && !customer._id) {
+      toast.push(
+        <Notification title="Customer id missing" type="warning" duration={2500}>
+          Selected specific customer does not have user id.
+        </Notification>,
+        { placement: "top-center" },
+      );
+      return;
+    }
+
+    setSelectedMergeCustomer(customer);
+    setMergeSearch(customer.clientName || "");
+    setShowMergeSuggestions(false);
+  };
 
   const handleEditPayment = async (
     values: FormModel,
@@ -483,14 +656,28 @@ const PaymentList = () => {
           <h3 className="text-gray-900">Sales Ledger</h3>
           <p className="text-sm text-gray-500 mt-1">
             {userName
-              ? `${userName} ${
+              ? `${userName} ${isMergeLedger ? "merged " : ""}${
                   fromMonth && toMonth ? "range" : fromMonth || toMonth ? "monthly" : "yearly"
                 } ledger report`
-              : `${fromMonth && toMonth ? "Range" : fromMonth || toMonth ? "Monthly" : "Yearly"} ledger report`}
+              : `${fromMonth && toMonth ? "Range" : fromMonth || toMonth ? "Monthly" : "Yearly"} ${isMergeLedger ? "merged " : ""}ledger report`}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="w-[160px]">
+            <label className="mb-1 block text-xs font-semibold text-gray-500">
+              Ledger Type
+            </label>
+            <select
+              value={ledgerType}
+              onChange={(event) => handleLedgerTypeChange(event.target.value)}
+              className="h-11 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="Bill">Single Ledger</option>
+              <option value="mergeBill">Merge Ledger</option>
+            </select>
+          </div>
+
           <button
             onClick={handleDownloadLedgerPdf}
             disabled={loading || downloadingPdf}
@@ -572,6 +759,80 @@ const PaymentList = () => {
           )}
         </div>
       </div>
+
+      {isMergeLedger && (
+        <div className="mb-4 rounded border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-3">
+            <h4 className="text-sm font-semibold text-slate-900">
+              Merge With{" "}
+              {mergeTargetType === "walkingCustomer"
+                ? "Walking Customer"
+                : "Specific Customer"}
+            </h4>
+            <p className="mt-1 text-xs text-slate-500">
+              Search and select the customer to include in this merged ledger.
+            </p>
+          </div>
+
+          <div className="relative max-w-xl">
+            <input
+              type="text"
+              value={mergeSearch}
+              onFocus={() => {
+                if (mergeSearch.trim()) {
+                  setShowMergeSuggestions(true);
+                }
+              }}
+              onChange={(event) => {
+                setMergeSearch(event.target.value);
+                setSelectedMergeCustomer(null);
+                setShowMergeSuggestions(Boolean(event.target.value.trim()));
+              }}
+              placeholder={`Search ${
+                mergeTargetType === "walkingCustomer"
+                  ? "walking customer"
+                  : "specific customer"
+              }`}
+              className="h-11 w-full rounded border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+            />
+
+            {showMergeSuggestions && mergeSearch.trim() && (
+              <div className="absolute left-0 right-0 z-30 mt-2 max-h-64 overflow-auto rounded border border-slate-200 bg-white shadow-lg">
+                {mergeCustomerLoading ? (
+                  <div className="px-4 py-3 text-sm text-slate-500">
+                    Searching customers...
+                  </div>
+                ) : mergeCustomerOptions.length > 0 ? (
+                  mergeCustomerOptions.slice(0, 10).map((customer, index) => (
+                    <button
+                      key={`${customer._id || customer.ref_no || customer.clientName}-${index}`}
+                      type="button"
+                      onMouseDown={() => handleMergeCustomerSelect(customer)}
+                      className="w-full border-b border-slate-100 px-4 py-3 text-left text-sm hover:bg-slate-50 last:border-b-0"
+                    >
+                      <span className="block font-semibold text-slate-800">
+                        {customer.clientName || "Customer"}
+                      </span>
+                      <span className="block text-xs text-slate-500">
+                        {[
+                          customer.ref_no && `Ref No: ${customer.ref_no}`,
+                          customer.billNo && `Bill No: ${customer.billNo}`,
+                        ]
+                          .filter(Boolean)
+                          .join(" | ") || "-"}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-sm text-slate-500">
+                    No customer found
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
         <div className="rounded border border-gray-200 bg-white px-4 py-3">
