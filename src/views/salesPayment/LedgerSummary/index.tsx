@@ -110,6 +110,8 @@ const getClientTypeLabel = (item: LedgerSummaryRow) => {
 const LedgerSummary = () => {
   const [periodType, setPeriodType] = useState("month");
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [fromMonth, setFromMonth] = useState(currentMonth);
+  const [toMonth, setToMonth] = useState(currentMonth);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [ledgerData, setLedgerData] = useState<LedgerSummaryRow[]>([]);
   const [summary, setSummary] = useState<LedgerSummaryTotals | null>(null);
@@ -117,9 +119,14 @@ const LedgerSummary = () => {
 
   const periodLabel = useMemo(() => {
     if (periodType === "year") return selectedYear;
+    if (periodType === "range") {
+      return `${formatMonthLabel(fromMonth)} to ${formatMonthLabel(
+        toMonth || fromMonth,
+      )}`;
+    }
 
     return formatMonthLabel(selectedMonth);
-  }, [periodType, selectedMonth, selectedYear]);
+  }, [fromMonth, periodType, selectedMonth, selectedYear, toMonth]);
 
   const requestParams = useMemo(() => {
     if (periodType === "year") {
@@ -129,12 +136,20 @@ const LedgerSummary = () => {
       };
     }
 
+    if (periodType === "range") {
+      return {
+        userType: "all",
+        fromMonth,
+        toMonth: toMonth || fromMonth,
+      };
+    }
+
     return {
       userType: "all",
       fromMonth: selectedMonth,
       toMonth: selectedMonth,
     };
-  }, [periodType, selectedMonth, selectedYear]);
+  }, [fromMonth, periodType, selectedMonth, selectedYear, toMonth]);
 
   const displayOpeningBalance = summary?.openingBalance ?? 0;
   const displayTotalDebit = summary?.totalDebit ?? 0;
@@ -189,10 +204,19 @@ const LedgerSummary = () => {
             </label>
             <select
               value={periodType}
-              onChange={(event) => setPeriodType(event.target.value)}
+              onChange={(event) => {
+                const nextPeriodType = event.target.value;
+                setPeriodType(nextPeriodType);
+
+                if (nextPeriodType === "range") {
+                  setFromMonth(selectedMonth);
+                  setToMonth(selectedMonth);
+                }
+              }}
               className="h-11 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
             >
               <option value="month">Monthly</option>
+              <option value="range">Month Range</option>
               <option value="year">Yearly</option>
             </select>
           </div>
@@ -209,6 +233,39 @@ const LedgerSummary = () => {
                 className="h-11 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               />
             </div>
+          ) : periodType === "range" ? (
+            <>
+              <div className="w-[170px]">
+                <label className="mb-1 block text-xs font-semibold text-gray-500">
+                  From Month
+                </label>
+                <input
+                  type="month"
+                  value={fromMonth}
+                  onChange={(event) => {
+                    const nextFromMonth = event.target.value;
+                    setFromMonth(nextFromMonth);
+
+                    if (toMonth && nextFromMonth > toMonth) {
+                      setToMonth(nextFromMonth);
+                    }
+                  }}
+                  className="h-11 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                />
+              </div>
+              <div className="w-[170px]">
+                <label className="mb-1 block text-xs font-semibold text-gray-500">
+                  To Month
+                </label>
+                <input
+                  type="month"
+                  value={toMonth}
+                  min={fromMonth}
+                  onChange={(event) => setToMonth(event.target.value)}
+                  className="h-11 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                />
+              </div>
+            </>
           ) : (
             <div className="w-[130px]">
               <label className="mb-1 block text-xs font-semibold text-gray-500">
@@ -280,8 +337,12 @@ const LedgerSummary = () => {
             Overall Ledger
           </p>
           <p className="text-xs text-gray-500">
-            {periodType === "month" ? "Monthly" : "Yearly"} statement for all
-            clients
+            {periodType === "month"
+              ? "Monthly"
+              : periodType === "range"
+                ? "Range"
+                : "Yearly"}{" "}
+            statement for all clients
           </p>
         </div>
 
