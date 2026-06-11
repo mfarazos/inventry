@@ -79,6 +79,17 @@ body {
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18);
 }
 
+.menu-item.inventory-horizontal-menu-active {
+  background: #eef2f7;
+  color: #0f172a;
+  border: 1px solid #d8e0ea;
+  box-shadow: inset 0 -2px 0 #475569;
+}
+
+.menu-item.inventory-horizontal-menu-active svg {
+  color: #334155;
+}
+
 .card,
 .page-container .rounded.border.bg-white,
 .page-container .rounded.border.border-gray-200.bg-white {

@@ -508,6 +508,16 @@ const PaymentList = () => {
           </div>
 
           <table class="ledger-table">
+            <colgroup>
+              <col style="width: 10%;" />
+              <col style="width: 38%;" />
+              <col style="width: 6%;" />
+              <col style="width: 8%;" />
+              <col style="width: 8%;" />
+              <col style="width: 10%;" />
+              <col style="width: 10%;" />
+              <col style="width: 10%;" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Date</th>
@@ -591,6 +601,12 @@ const PaymentList = () => {
 
         .ledger-table td {
           text-align: left;
+        }
+
+        .ledger-table th:nth-child(2),
+        .ledger-table td:nth-child(2) {
+          white-space: normal;
+          line-height: 1.35;
         }
 
         .ledger-table .amount {
@@ -887,15 +903,15 @@ const PaymentList = () => {
 
         <Table className="w-full table-fixed" hoverable={false}>
           <colgroup>
-            <col className="w-[11%]" />
-            <col className="w-[25%]" />
+            <col className="w-[10%]" />
+            <col className="w-[34%]" />
+            <col className="w-[6%]" />
+            <col className="w-[7%]" />
             <col className="w-[8%]" />
             <col className="w-[10%]" />
             <col className="w-[10%]" />
-            <col className="w-[12%]" />
-            <col className="w-[12%]" />
-            <col className="w-[12%]" />
-            <col className="w-[7%]" />
+            <col className="w-[10%]" />
+            <col className="w-[5%]" />
           </colgroup>
 
           <THead>
@@ -952,7 +968,7 @@ const PaymentList = () => {
                     <Td className="whitespace-nowrap !text-left text-gray-900">
                       {formatDate(item?.date || item?.monthKey)}
                     </Td>
-                    <Td className="truncate !text-left">
+                    <Td className="whitespace-normal break-words !text-left leading-5">
                       {item.description || "-"}
                     </Td>
                     <Td className="!text-center text-gray-700">

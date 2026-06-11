@@ -48,6 +48,34 @@ const getResponseRows = (responseData: any): MergeCustomerOption[] => {
   return [];
 };
 
+const formatMonthLabel = (monthValue?: string) => {
+  if (!monthValue) return "";
+
+  const date = new Date(`${monthValue}-01T00:00:00`);
+  if (Number.isNaN(date.getTime())) return monthValue;
+
+  return date.toLocaleDateString("en-GB", {
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const getMonthEndDateLabel = (monthValue?: string) => {
+  if (!monthValue) return "-";
+
+  const date = new Date(`${monthValue}-01T00:00:00`);
+  if (Number.isNaN(date.getTime())) return monthValue;
+
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0).toLocaleDateString(
+    "en-GB",
+    {
+      day: "2-digit",
+      month: "numeric",
+      year: "numeric",
+    },
+  );
+};
+
 export default function CustomerList() {
   const { textTheme } = useThemeClass();
   const navigate = useNavigate();
@@ -125,7 +153,6 @@ export default function CustomerList() {
         amount: normalAmount,
         totalAmount: normalAmount + extraAmount + companyExcessAmount,
       };
-      const selectedMonth = new Date().toISOString().slice(0, 7);
 
       const lineItemsHtml =
         data && data.length > 0
@@ -321,7 +348,7 @@ export default function CustomerList() {
         <html lang="en">
         <head>
           <meta charset="UTF-8"/>
-          <title>${userName || "Customer"} PE Billing – ${selectedMonth}</title>
+          <title>${userName || "Customer"} PE Billing – ${billingPeriodLabel}</title>
           <style>
             @page {
               size: A4;
@@ -412,15 +439,9 @@ export default function CustomerList() {
                 Bill No: ${billDetails?.billNo || "-"}
               </h1>
               <h3>
-                Date: ${new Date(
-                  new Date(selectedMonth + "-01").getFullYear(),
-                  new Date(selectedMonth + "-01").getMonth(),
-                  0,
-                ).toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "numeric",
-                  year: "numeric",
-                })}
+                Period: ${billingPeriodLabel}
+                <br>
+                Date: ${getMonthEndDateLabel(billingPeriodEndMonth)}
               </h3>
             </div>
             <table>
@@ -501,9 +522,13 @@ export default function CustomerList() {
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedImg, setSelectedImg] = useState<string>("");
   const [productType, setProductType] = useState("Bill");
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const [billingPeriodMode, setBillingPeriodMode] = useState("single");
   const [selectedMonth, setSelectedMonth] = useState(
-    new Date().toISOString().slice(0, 7),
+    currentMonth,
   );
+  const [fromMonth, setFromMonth] = useState(currentMonth);
+  const [toMonth, setToMonth] = useState(currentMonth);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentEditingItem, setCurrentEditingItem] = useState<any>(null);
   const [manualWhatsAppPhone, setManualWhatsAppPhone] = useState("");
@@ -523,6 +548,22 @@ export default function CustomerList() {
     currentUserType === "specificCustomer"
       ? "walkingCustomer"
       : "specificCustomer";
+  const isRangePeriod = billingPeriodMode === "range";
+  const billingPeriodEndMonth = isRangePeriod ? toMonth || fromMonth : selectedMonth;
+  const billingPeriodLabel = isRangePeriod
+    ? `${formatMonthLabel(fromMonth)} to ${formatMonthLabel(toMonth || fromMonth)}`
+    : formatMonthLabel(selectedMonth);
+
+  const billingPeriodFilter = useMemo(() => {
+    if (!isRangePeriod) {
+      return { month: selectedMonth };
+    }
+
+    return {
+      fromMonth,
+      toMonth: toMonth || fromMonth,
+    };
+  }, [fromMonth, isRangePeriod, selectedMonth, toMonth]);
 
   const normalizeWhatsAppPhone = (value: string) => {
     const rawPhone = String(value || "").replace(/\D/g, "");
@@ -549,7 +590,7 @@ export default function CustomerList() {
     const billNoText = billData?.[0]?.billNo || "N/A";
     const messageText = `Assalam o Alaikum ${
       userName || "Customer"
-    },\n\nYour billing report is ready.\nBill No: ${billNoText}\nMonth: ${selectedMonth}\n\nPlease find the downloaded PDF attached.`;
+    },\n\nYour billing report is ready.\nBill No: ${billNoText}\nPeriod: ${billingPeriodLabel}\n\nPlease find the downloaded PDF attached.`;
     const message = encodeURIComponent(messageText);
 
     const whatsAppWindow = window.open(
@@ -594,7 +635,7 @@ export default function CustomerList() {
   const billingFilter = useMemo(() => {
     const baseFilter: Record<string, any> = {
       product: productType,
-      month: selectedMonth,
+      ...billingPeriodFilter,
       userType: currentUserType,
     };
 
@@ -630,11 +671,11 @@ export default function CustomerList() {
     };
   }, [
     currentUserType,
+    billingPeriodFilter,
     phoneNumber,
     productType,
     ref_no,
     selectedMergeCustomer,
-    selectedMonth,
     userId,
   ]);
 
@@ -1262,10 +1303,94 @@ export default function CustomerList() {
           ]}
           dropDownSelectedValue={productType}
           onChangeDropDown={onChangeDropDown}
-          onChangeMonth={(m) => setSelectedMonth(m)}
-          selectedMonth={selectedMonth}
-          isMonthPicket
         />
+
+        <div className="mt-4 rounded border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-900">
+                Bill Period
+              </h4>
+              <p className="mt-1 text-xs text-slate-500">
+                Select one month or choose a month range for this bill.
+              </p>
+            </div>
+            <span className="rounded bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              {billingPeriodLabel}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[220px_1fr]">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                Period Type
+              </label>
+              <select
+                value={billingPeriodMode}
+                onChange={(event) => {
+                  const nextMode = event.target.value;
+                  setBillingPeriodMode(nextMode);
+
+                  if (nextMode === "range") {
+                    setFromMonth(selectedMonth);
+                    setToMonth(selectedMonth);
+                  }
+                }}
+                className="h-11 w-full rounded border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+              >
+                <option value="single">Single Month</option>
+                <option value="range">Month Range</option>
+              </select>
+            </div>
+
+            {!isRangePeriod ? (
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-600">
+                  Month
+                </label>
+                <input
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(event) => setSelectedMonth(event.target.value)}
+                  className="h-11 w-full rounded border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-600">
+                    From Month
+                  </label>
+                  <input
+                    type="month"
+                    value={fromMonth}
+                    onChange={(event) => {
+                      const nextFromMonth = event.target.value;
+                      setFromMonth(nextFromMonth);
+
+                      if (toMonth && nextFromMonth > toMonth) {
+                        setToMonth(nextFromMonth);
+                      }
+                    }}
+                    className="h-11 w-full rounded border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-600">
+                    To Month
+                  </label>
+                  <input
+                    type="month"
+                    value={toMonth}
+                    min={fromMonth}
+                    onChange={(event) => setToMonth(event.target.value)}
+                    className="h-11 w-full rounded border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {productType === "mergeBill" && (
           <div className="mt-4 rounded border border-slate-200 bg-white p-4 shadow-sm">
