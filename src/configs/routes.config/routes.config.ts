@@ -148,7 +148,7 @@ export const protectedRoutes = [
     key: "ledger-summary",
     path: `/ledger-summary`,
     component: lazy(() => import("@/views/salesPayment/LedgerSummary")),
-    authority: [],
+    authority: ["admin"],
   },
 
   

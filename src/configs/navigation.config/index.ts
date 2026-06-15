@@ -94,7 +94,7 @@ const navigationConfig: NavigationTree[] = [
     translateKey: "ledgerSummary",
     icon: "payemnt",
     type: NAV_ITEM_TYPE_ITEM,
-    authority: [],
+    authority: ["admin"],
     subMenu: [],
   },
   {

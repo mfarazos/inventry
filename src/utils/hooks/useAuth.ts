@@ -34,21 +34,38 @@ function useAuth() {
     > => {
         try {
             const resp = await apiSignIn(values)
-            console.log('resp--->', resp.data.data)
 
             if (resp.data) {
-                const { accessToken } = resp.data.data
+                const responseBody = resp.data as any
+                const responseData = responseBody.data || responseBody.user || {}
+                const accessToken =
+                    responseBody.accessToken || responseData.accessToken || ''
+                const role = String(
+                    responseData.userRole || responseData.role || '',
+                )
+                    .trim()
+                    .toLowerCase()
+
+                if (!accessToken) {
+                    return {
+                        status: 'failed',
+                        message: 'Access token missing from login response',
+                    }
+                }
+
                 dispatch(signInSuccess(accessToken))
-                if (resp.data.data) {
+                if (responseData) {
+                    console.log('User data from response:', responseData) // Debug log
                     dispatch(
-                        setUser(
-                            resp.data.data || {
-                                avatar: '',
-                                userName: 'Anonymous',
-                                authority: ['USER'],
-                                email: '',
-                            },
-                        ),
+                        setUser({
+                            ...responseData,
+                            avatar: responseData.avatar || '',
+                            userName:
+                                responseData.user.username ||
+                                'Anonymous',
+                            email: responseData.user.email || '',
+                            authority: responseData.user.userRole ? [responseData.user.userRole] : [],
+                        }),
                     )
                 }
                 const redirectUrl = query.get(REDIRECT_URL_KEY)
