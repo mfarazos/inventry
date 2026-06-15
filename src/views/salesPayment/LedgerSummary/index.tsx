@@ -5,6 +5,7 @@ import Notification from "@/components/ui/Notification";
 import toast from "@/components/ui/toast";
 import { getSalesLedgerYearly } from "@/services/GameManagement";
 import html2pdf from "html2pdf.js/dist/html2pdf.bundle.min.js";
+import { useAppSelector } from "@/store";
 
 const { Tr, Th, Td, THead, TBody } = Table;
 
@@ -123,6 +124,12 @@ const getMaterialTypeLabel = (value: string) => {
 };
 
 const LedgerSummary = () => {
+  const userAuthority = useAppSelector(
+    (state) => state.auth.user.authority || [],
+  );
+  const isAdmin = userAuthority.some(
+    (role) => String(role).toLowerCase() === "admin",
+  );
   const [periodType, setPeriodType] = useState("month");
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [fromMonth, setFromMonth] = useState(currentMonth);
@@ -277,12 +284,16 @@ const LedgerSummary = () => {
             </div>
             <div class="pdf-period">Period: ${periodLabel}</div>
           </div>
-          <div class="summary-grid">
-            <div class="summary-item"><span>Opening Balance</span><strong>${formatAmount(displayOpeningBalance)}</strong></div>
-            <div class="summary-item"><span>Total Debit</span><strong>${formatAmount(displayTotalDebit)}</strong></div>
-            <div class="summary-item"><span>Total Credit</span><strong>${formatAmount(displayTotalCredit)}</strong></div>
-            <div class="summary-item"><span>Closing Balance</span><strong>${formatAmount(displayClosingBalance)}</strong></div>
-          </div>
+          ${
+            isAdmin
+              ? `<div class="summary-grid">
+                  <div class="summary-item"><span>Opening Balance</span><strong>${formatAmount(displayOpeningBalance)}</strong></div>
+                  <div class="summary-item"><span>Total Debit</span><strong>${formatAmount(displayTotalDebit)}</strong></div>
+                  <div class="summary-item"><span>Total Credit</span><strong>${formatAmount(displayTotalCredit)}</strong></div>
+                  <div class="summary-item"><span>Closing Balance</span><strong>${formatAmount(displayClosingBalance)}</strong></div>
+                </div>`
+              : ""
+          }
           <table>
             <colgroup>
               <col class="date"/><col class="client"/><col class="type"/><col class="description"/>
@@ -471,40 +482,42 @@ const LedgerSummary = () => {
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
-        <div className="rounded border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Opening Balance
-          </p>
-          <p className="mt-1 text-lg font-bold text-gray-900">
-            {formatAmount(displayOpeningBalance)}
-          </p>
+      {isAdmin && (
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <div className="rounded border border-gray-200 bg-white px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Opening Balance
+            </p>
+            <p className="mt-1 text-lg font-bold text-gray-900">
+              {formatAmount(displayOpeningBalance)}
+            </p>
+          </div>
+          <div className="rounded border border-gray-200 bg-white px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Total Debit
+            </p>
+            <p className="mt-1 text-lg font-bold text-red-600">
+              {formatAmount(displayTotalDebit)}
+            </p>
+          </div>
+          <div className="rounded border border-gray-200 bg-white px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Total Credit
+            </p>
+            <p className="mt-1 text-lg font-bold text-emerald-700">
+              {formatAmount(displayTotalCredit)}
+            </p>
+          </div>
+          <div className="rounded border border-gray-200 bg-white px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Closing Balance
+            </p>
+            <p className="mt-1 text-lg font-bold text-blue-700">
+              {formatAmount(displayClosingBalance)}
+            </p>
+          </div>
         </div>
-        <div className="rounded border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Total Debit
-          </p>
-          <p className="mt-1 text-lg font-bold text-red-600">
-            {formatAmount(displayTotalDebit)}
-          </p>
-        </div>
-        <div className="rounded border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Total Credit
-          </p>
-          <p className="mt-1 text-lg font-bold text-emerald-700">
-            {formatAmount(displayTotalCredit)}
-          </p>
-        </div>
-        <div className="rounded border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Closing Balance
-          </p>
-          <p className="mt-1 text-lg font-bold text-blue-700">
-            {formatAmount(displayClosingBalance)}
-          </p>
-        </div>
-      </div>
+      )}
 
       <div className="rounded border border-gray-200 bg-white">
         <div className="border-b border-gray-200 px-4 py-3">

@@ -35,11 +35,18 @@ import {
   import { handleHttpReq } from "@/utils/HandleHttp";
   import html2pdf from "html2pdf.js/dist/html2pdf.bundle.min.js";
   import ApiService from "@/services/ApiService";
+  import { useAppSelector } from "@/store";
   
   function Companypurchaselist() {
     // theme and navigation hook
     const { textTheme } = useThemeClass();
     const navigate = useNavigate();
+    const userAuthority = useAppSelector(
+      (state) => state.auth.user.authority || [],
+    );
+    const isAdmin = userAuthority.some(
+      (role) => String(role).toLowerCase() === "admin",
+    );
 
     const location = useLocation();
     const { userType, userId, userName  } = location.state || {};
@@ -576,7 +583,7 @@ import {
   
       return (
         <div className="flex justify-end text-lg">
-          {status == "pending" && (<span
+          {isAdmin && status == "pending" && (<span
               className={`cursor-pointer p-2 hover:${textTheme}`}
               onClick={approved(status, _id, type)}
             >
@@ -590,12 +597,14 @@ import {
           </span>
 
     
-          <span
-            className="cursor-pointer p-2 hover:text-red-500"
-            onClick={onDelete(_id, type, )}
-          >
-            <HiOutlineTrash />
-          </span>
+          {isAdmin && (
+            <span
+              className="cursor-pointer p-2 hover:text-red-500"
+              onClick={onDelete(_id, type)}
+            >
+              <HiOutlineTrash />
+            </span>
+          )}
 
 
          
