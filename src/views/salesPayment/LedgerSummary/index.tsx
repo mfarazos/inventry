@@ -4,6 +4,7 @@ import Button from "@/components/ui/Button";
 import Notification from "@/components/ui/Notification";
 import toast from "@/components/ui/toast";
 import { getSalesLedgerYearly } from "@/services/GameManagement";
+import html2pdf from "html2pdf.js/dist/html2pdf.bundle.min.js";
 
 const { Tr, Th, Td, THead, TBody } = Table;
 
@@ -107,15 +108,32 @@ const getClientTypeLabel = (item: LedgerSummaryRow) => {
   return "-";
 };
 
+const getClientTypeFilterLabel = (value: string) => {
+  if (value === "walkingCustomer") return "Walking Clients";
+  if (value === "specificCustomer") return "Extruding Clients";
+
+  return "All Clients";
+};
+
+const getMaterialTypeLabel = (value: string) => {
+  if (value === "poleythene") return "PE";
+  if (value === "hydensity") return "HD";
+
+  return "All Materials";
+};
+
 const LedgerSummary = () => {
   const [periodType, setPeriodType] = useState("month");
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [fromMonth, setFromMonth] = useState(currentMonth);
   const [toMonth, setToMonth] = useState(currentMonth);
   const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [materialType, setMaterialType] = useState("all");
+  const [clientType, setClientType] = useState("all");
   const [ledgerData, setLedgerData] = useState<LedgerSummaryRow[]>([]);
   const [summary, setSummary] = useState<LedgerSummaryTotals | null>(null);
   const [loading, setLoading] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const periodLabel = useMemo(() => {
     if (periodType === "year") return selectedYear;
@@ -131,25 +149,28 @@ const LedgerSummary = () => {
   const requestParams = useMemo(() => {
     if (periodType === "year") {
       return {
-        userType: "all",
+        userType: clientType,
+        customerProduct: materialType,
         year: selectedYear,
       };
     }
 
     if (periodType === "range") {
       return {
-        userType: "all",
+        userType: clientType,
+        customerProduct: materialType,
         fromMonth,
         toMonth: toMonth || fromMonth,
       };
     }
 
     return {
-      userType: "all",
+      userType: clientType,
+      customerProduct: materialType,
       fromMonth: selectedMonth,
       toMonth: selectedMonth,
     };
-  }, [fromMonth, periodType, selectedMonth, selectedYear, toMonth]);
+  }, [clientType, fromMonth, materialType, periodType, selectedMonth, selectedYear, toMonth]);
 
   const displayOpeningBalance = summary?.openingBalance ?? 0;
   const displayTotalDebit = summary?.totalDebit ?? 0;
@@ -187,17 +208,161 @@ const LedgerSummary = () => {
     fetchLedgerSummary();
   }, [fetchLedgerSummary]);
 
+  const handleDownloadPdf = async () => {
+    let element: HTMLDivElement | null = null;
+
+    try {
+      setDownloadingPdf(true);
+
+      const clientLabel = getClientTypeFilterLabel(clientType);
+      const materialLabel = getMaterialTypeLabel(materialType);
+      const filename = `ledger-summary-${periodLabel}-${materialLabel}-${clientLabel}`
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      const rows = ledgerData.length
+        ? ledgerData
+            .map((item, index) => {
+              const rowType = getRowType(item, index, ledgerData);
+
+              return `
+                <tr class="${rowType === "normal" ? "" : `${rowType}-row`}">
+                  <td>${formatDate(item.date)}</td>
+                  <td>${getClientName(item)}</td>
+                  <td class="center">${getClientTypeLabel(item)}</td>
+                  <td class="description">${item.description || "-"}</td>
+                  <td class="center">${item.folio || "-"}</td>
+                  <td class="center">${item.dueOnDate ? formatDate(item.dueOnDate) : "-"}</td>
+                  <td class="amount">${item.debit ? formatAmount(item.debit) : "-"}</td>
+                  <td class="amount">${item.credit ? formatAmount(item.credit) : "-"}</td>
+                  <td class="amount">${formatAmount(item.balance)}</td>
+                </tr>
+              `;
+            })
+            .join("")
+        : '<tr><td colspan="9" class="empty">No ledger summary found</td></tr>';
+
+      element = document.createElement("div");
+      element.innerHTML = `
+        <style>
+          .ledger-summary-pdf { padding: 24px; font-family: Arial, sans-serif; color: #1f2937; background: #fff; }
+          .pdf-header { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+          .pdf-header h1 { margin: 0 0 5px; font-size: 22px; }
+          .pdf-header p { margin: 0; color: #64748b; font-size: 11px; }
+          .pdf-period { font-size: 13px; font-weight: 700; text-align: right; }
+          .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+          .summary-item { border: 1px solid #dbe2ea; padding: 9px; }
+          .summary-item span { display: block; color: #64748b; font-size: 9px; text-transform: uppercase; margin-bottom: 4px; }
+          .summary-item strong { font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9px; }
+          col.date { width: 8%; } col.client { width: 14%; } col.type { width: 4%; }
+          col.description { width: 34%; } col.folio { width: 5%; } col.due { width: 7%; }
+          col.amount { width: 9.33%; }
+          th, td { border: 1px solid #d8dee7; padding: 6px 4px; vertical-align: top; word-break: break-word; }
+          th { background: #f1f5f9; text-align: center; text-transform: uppercase; font-size: 8px; }
+          td.amount { text-align: right; white-space: nowrap; }
+          td.center { text-align: center; }
+          td.description { line-height: 1.35; }
+          .opening-row td { background: #f8fafc; font-weight: 700; }
+          .final-row td { background: #eff6ff; border-top: 2px solid #475569; font-weight: 700; }
+          .empty { padding: 16px; text-align: center; }
+          tr { page-break-inside: avoid; break-inside: avoid; }
+          thead { display: table-header-group; }
+        </style>
+        <div class="ledger-summary-pdf">
+          <div class="pdf-header">
+            <div>
+              <h1>Ledger Summary</h1>
+              <p>${clientLabel} | ${materialLabel}</p>
+            </div>
+            <div class="pdf-period">Period: ${periodLabel}</div>
+          </div>
+          <div class="summary-grid">
+            <div class="summary-item"><span>Opening Balance</span><strong>${formatAmount(displayOpeningBalance)}</strong></div>
+            <div class="summary-item"><span>Total Debit</span><strong>${formatAmount(displayTotalDebit)}</strong></div>
+            <div class="summary-item"><span>Total Credit</span><strong>${formatAmount(displayTotalCredit)}</strong></div>
+            <div class="summary-item"><span>Closing Balance</span><strong>${formatAmount(displayClosingBalance)}</strong></div>
+          </div>
+          <table>
+            <colgroup>
+              <col class="date"/><col class="client"/><col class="type"/><col class="description"/>
+              <col class="folio"/><col class="due"/><col class="amount"/><col class="amount"/><col class="amount"/>
+            </colgroup>
+            <thead><tr><th>Date</th><th>Client Name</th><th>Type</th><th>Description</th><th>Folio</th><th>Due On</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+
+      document.body.appendChild(element);
+      await html2pdf()
+        .from(element)
+        .set({
+          margin: 0.2,
+          filename: `${filename}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+          jsPDF: { unit: "in", format: "a4", orientation: "landscape" },
+          pagebreak: { mode: ["css", "legacy"], avoid: "tr" },
+        })
+        .save();
+    } catch (error) {
+      console.log("Ledger summary PDF error", error);
+      toast.push(
+        <Notification title="Unable to download PDF" type="danger">
+          Please try again.
+        </Notification>,
+        { placement: "top-center" },
+      );
+    } finally {
+      if (element && document.body.contains(element)) {
+        document.body.removeChild(element);
+      }
+      setDownloadingPdf(false);
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h3 className="text-gray-900">Ledger Summary</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Overall ledger summary for all clients - {periodLabel}
+            Overall ledger summary for {getClientTypeFilterLabel(clientType).toLowerCase()} - {periodLabel}
           </p>
         </div>
 
         <div className="flex flex-wrap items-end gap-3">
+          <div className="w-[150px]">
+            <label className="mb-1 block text-xs font-semibold text-gray-500">
+              Material Type
+            </label>
+            <select
+              value={materialType}
+              onChange={(event) => setMaterialType(event.target.value)}
+              className="h-11 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="all">All</option>
+              <option value="poleythene">PE</option>
+              <option value="hydensity">HD</option>
+            </select>
+          </div>
+
+          <div className="w-[170px]">
+            <label className="mb-1 block text-xs font-semibold text-gray-500">
+              Client Type
+            </label>
+            <select
+              value={clientType}
+              onChange={(event) => setClientType(event.target.value)}
+              className="h-11 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="all">All</option>
+              <option value="walkingCustomer">Walking Client</option>
+              <option value="specificCustomer">Extruding Client</option>
+            </select>
+          </div>
+
           <div className="w-[160px]">
             <label className="mb-1 block text-xs font-semibold text-gray-500">
               Summary Type
@@ -293,6 +458,16 @@ const LedgerSummary = () => {
           >
             Refresh
           </Button>
+
+          <Button
+            type="button"
+            variant="solid"
+            loading={downloadingPdf}
+            disabled={loading || downloadingPdf}
+            onClick={handleDownloadPdf}
+          >
+            {downloadingPdf ? "Generating PDF..." : "Download PDF"}
+          </Button>
         </div>
       </div>
 
@@ -342,7 +517,7 @@ const LedgerSummary = () => {
               : periodType === "range"
                 ? "Range"
                 : "Yearly"}{" "}
-            statement for all clients
+            statement for {getClientTypeFilterLabel(clientType).toLowerCase()} | {getMaterialTypeLabel(materialType)}
           </p>
         </div>
 
