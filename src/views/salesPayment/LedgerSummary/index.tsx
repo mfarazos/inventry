@@ -3,7 +3,7 @@ import Table from "@/components/ui/Table";
 import Button from "@/components/ui/Button";
 import Notification from "@/components/ui/Notification";
 import toast from "@/components/ui/toast";
-import { getSalesLedgerYearly } from "@/services/GameManagement";
+import { getSalesLedgerSummary } from "@/services/GameManagement";
 import html2pdf from "html2pdf.js/dist/html2pdf.bundle.min.js";
 import { useAppSelector } from "@/store";
 
@@ -189,7 +189,7 @@ const LedgerSummary = () => {
     try {
       setLoading(true);
 
-      const response = await getSalesLedgerYearly({
+      const response = await getSalesLedgerSummary({
         ...requestParams,
         _t: Date.now(),
       });

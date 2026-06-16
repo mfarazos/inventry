@@ -22,6 +22,14 @@ export async function getSalesLedgerYearly<T>(params: T) {
   });
 }
 
+export async function getSalesLedgerSummary<T>(params: T) {
+  return ApiService.fetchData({
+    url: "/inventoryApp/getSalesLedgerSummary",
+    method: "get",
+    params,
+  });
+}
+
 export function getwalkingCustomers() {
   return "/inventoryApp/getwalkingcustomer";
 }
