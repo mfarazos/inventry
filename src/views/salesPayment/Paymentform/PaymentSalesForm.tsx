@@ -21,7 +21,7 @@ export type FormModel = {
   folio?: string;
   date: string;
   amount: number;
-  paymentMethod: "cash" | "bank" | "online" | "other";
+  paymentMethod: "cash" | "bank" | "online" | "cheque" | "other";
   description?: string;
 };
 
@@ -57,6 +57,7 @@ const paymentMethodOptions = [
   { value: "cash", label: "Cash" },
   { value: "bank", label: "Bank" },
   { value: "online", label: "Online" },
+  { value: "cheque", label: "Cheque" },
   { value: "other", label: "Other" },
 ];
 

@@ -28,7 +28,7 @@ type LedgerRow = {
   billNo?: string | number;
   dueOnDate?: string;
   paymentId?: string;
-  paymentMethod?: "cash" | "bank" | "online" | "other";
+  paymentMethod?: "cash" | "bank" | "online" | "cheque" | "other";
   entryType?: string;
   debit: number;
   credit: number;
