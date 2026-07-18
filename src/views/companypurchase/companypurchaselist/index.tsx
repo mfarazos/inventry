@@ -47,6 +47,10 @@ import {
     const isAdmin = userAuthority.some(
       (role) => String(role).toLowerCase() === "admin",
     );
+    const isManager = userAuthority.some(
+      (role) => String(role).toLowerCase() === "manager",
+    );
+    const canDeleteEntry = isAdmin || isManager;
 
     const location = useLocation();
     const { userType, userId, userName  } = location.state || {};
@@ -597,7 +601,7 @@ import {
           </span>
 
     
-          {isAdmin && (
+          {canDeleteEntry && (
             <span
               className="cursor-pointer p-2 hover:text-red-500"
               onClick={onDelete(_id, type)}
