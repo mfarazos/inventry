@@ -231,6 +231,15 @@ body {
   background: #f8fbff;
 }
 
+/* list tables ke headers ek hi line me rahen — "Recycle LLD" toot kar na dikhe */
+.page-container table thead > tr > th {
+  white-space: nowrap;
+}
+
+.page-container table tbody > tr > td {
+  white-space: nowrap;
+}
+
 .page-container table {
   background: #ffffff;
 }
@@ -280,27 +289,126 @@ body {
   gap: 0.75rem;
 }
 
+/* ---- monthly summary card ---- */
+.inventory-summary-card {
+  margin: 0 0 1.75rem;
+  padding: 1rem 1rem 0.25rem;
+  border: 1px solid rgba(219, 228, 239, 0.9);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+}
+
+.inventory-summary-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.inventory-summary-head h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--inventory-text);
+}
+
+.inventory-summary-head span {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.inventory-summary-scroll {
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
 .inventory-report-table {
   width: 100%;
+  min-width: 640px;
   border: 1px solid var(--inventory-border);
   border-radius: 8px;
+  border-collapse: separate;
+  border-spacing: 0;
   overflow: hidden;
   background: #ffffff;
   box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
 }
 
 .inventory-report-table th {
-  background: #f8fafc;
+  background: #f1f5fb;
   color: #475569;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
-.inventory-report-table th,
-.inventory-report-table td {
-  border-color: #e2e8f0;
-  padding: 0.75rem 1rem;
+.inventory-report-cell {
+  border-bottom: 1px solid #e7edf5;
+  padding: 0.7rem 1rem;
+  font-size: 0.85rem;
+  color: #1f2937;
+  white-space: nowrap;
+}
+
+.inventory-report-table tbody tr:last-child .inventory-report-cell {
+  border-bottom: 0;
+}
+
+/* numbers right aligned aur ek jaisi width me */
+.inventory-report-cell.is-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* variety columns — mixing ki breakdown, halka tint se group lagti hain */
+.inventory-report-cell.is-variety {
+  background: #fbfdff;
+  color: #475569;
+}
+
+th.inventory-report-cell.is-variety {
+  background: #eaf1fa;
+}
+
+/* total column aur closing balance row numayan */
+.inventory-report-cell.is-total {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.inventory-report-table tbody tr:hover .inventory-report-cell {
+  background: #f6faff;
+}
+
+.inventory-report-table tbody tr.is-highlight .inventory-report-cell {
+  background: #eef6ff;
+  font-weight: 600;
+}
+
+/* pehla column scroll ke waqt jama rehta hai */
+.inventory-report-table th:first-child,
+.inventory-report-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #ffffff;
+  box-shadow: 1px 0 0 #e7edf5;
+}
+
+.inventory-report-table th:first-child {
+  background: #f1f5fb;
+}
+
+.inventory-report-table tbody tr.is-highlight td:first-child {
+  background: #eef6ff;
+}
+
+.inventory-report-table tbody tr:hover td:first-child {
+  background: #f6faff;
 }
 
 @media (max-width: 768px) {
@@ -319,5 +427,14 @@ body {
 
   .inventory-page-actions > * {
     width: 100%;
+  }
+
+  .inventory-summary-card {
+    padding: 0.85rem 0.85rem 0.25rem;
+  }
+
+  .inventory-report-cell {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.8rem;
   }
 }

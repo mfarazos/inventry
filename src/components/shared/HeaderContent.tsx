@@ -67,6 +67,68 @@ const HeaderContent = (props: HeaderContentProps) => {
     navigate(path, { state });
   };
 
+  const num = (value: any) => Number(value) || 0;
+
+  // 21762.799999999996 jaisi values readable banane ke liye
+  const fmt = (value: any) => {
+    const amount = num(value);
+    return Number.isInteger(amount)
+      ? amount.toLocaleString()
+      : amount.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+  };
+
+  // backend har variety ka apna weight bhejta hai — mixing column unka total hai,
+  // ye columns us total ki breakdown dikhate hain
+  // mixingOther ("Mixing (baqi)") filhaal show nahi karna
+  const varieties: any[] = Array.isArray(weightData?.varieties)
+    ? weightData.varieties.filter((variety: any) => variety?.key !== "mixingOther")
+    : [];
+
+  const summaryRows = [
+    {
+      label: "Opening balance",
+      pureKey: "openingBalanceWeightPure",
+      mixingKey: "openingBalanceWeightMixing",
+      varietyKey: "openingBalance",
+    },
+    {
+      label: "Total dana received by party",
+      pureKey: "purchaseWeightPure",
+      mixingKey: "purchaseWeightMixing",
+      varietyKey: "purchase",
+    },
+    {
+      label: "Total dana received + openingBalance",
+      pureKey: "totalPurchaseWeightPure",
+      mixingKey: "totalPurchaseWeightMixing",
+      varietyKey: "totalPurchase",
+    },
+    {
+      label: "Total dana consumption",
+      pureKey: "saleWeightPure",
+      mixingKey: "saleWeightMixing",
+      varietyKey: "sale",
+    },
+    {
+      label: "Closing Balance",
+      pureKey: "closingWeightPure",
+      mixingKey: "closingWeightMixing",
+      varietyKey: "closing",
+      highlight: true,
+    },
+    {
+      label: "Bags",
+      pureKey: "Purebags",
+      mixingKey: "Mixingbags",
+      varietyKey: "purchaseBags",
+    },
+  ];
+
+  const cellClass = "inventory-report-cell";
+
   return (
     <>
       <div className="inventory-page-header">
@@ -168,114 +230,59 @@ const HeaderContent = (props: HeaderContentProps) => {
 
       {weightData && (
         <>
-          <div className="overflow-x-auto mt-4">
+          <div className="inventory-summary-card">
+            <div className="inventory-summary-head">
+              <h2>Summary</h2>
+              <span>Mixing column ki breakdown — har variety ka apna weight</span>
+            </div>
+            <div className="inventory-summary-scroll">
             <table className="inventory-report-table">
               <thead>
-                <tr className="bg-gray-200">
-                  <th className="border border-gray-400 px-4 py-2">
-                    stock purchases
-                  </th>
-                  <th className="border border-gray-400 px-4 py-2">pure</th>
-                  <th className="border border-gray-400 px-4 py-2">mixing </th>
-                  <th className="border border-gray-400 px-4 py-2">Total</th>
+                <tr>
+                  <th className={cellClass}>stock purchases</th>
+                  <th className={`${cellClass} is-num`}>pure</th>
+                  {varieties.map((variety: any) => (
+                    <th
+                      key={variety.key}
+                      className={`${cellClass} is-num is-variety`}
+                    >
+                      {variety.label}
+                    </th>
+                  ))}
+                  <th className={`${cellClass} is-num`}>mixing</th>
+                  <th className={`${cellClass} is-num is-total`}>Total</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td className="border border-gray-400 px-4 py-2">
-                    Opening balance
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.openingBalanceWeightPure || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.openingBalanceWeightMixing || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {(weightData?.openingBalanceWeightPure || 0) +
-                      (weightData?.openingBalanceWeightMixing || 0)}
-                  </td>
-                </tr>
+                {summaryRows.map((row) => {
+                  const pure = num(weightData?.[row.pureKey]);
+                  const mixing = num(weightData?.[row.mixingKey]);
 
-                <tr>
-                  <td className="border border-gray-400 px-4 py-2">
-                    Total dana received by party
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.purchaseWeightPure || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.purchaseWeightMixing || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {(weightData?.purchaseWeightPure || 0) +
-                      (weightData?.purchaseWeightMixing || 0)}
-                  </td>
-                </tr>
-
-                <tr>
-                  <td className="border border-gray-400 px-4 py-2">
-                    Total dana received + openingBalance
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.totalPurchaseWeightPure || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.totalPurchaseWeightMixing || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {(weightData?.totalPurchaseWeightPure || 0) +
-                      (weightData?.totalPurchaseWeightMixing || 0)}
-                  </td>
-                </tr>
-
-                <tr>
-                  <td className="border border-gray-400 px-4 py-2">
-                    Total dana consumption
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.saleWeightPure || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.saleWeightMixing || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {(weightData?.saleWeightPure || 0) +
-                      (weightData?.saleWeightMixing || 0)}
-                  </td>
-                </tr>
-
-                <tr>
-                  <td className="border border-gray-400 px-4 py-2">
-                    Closing Balance
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.closingWeightPure || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.closingWeightMixing || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {(weightData?.closingWeightPure || 0) +
-                      (weightData?.closingWeightMixing || 0)}
-                  </td>
-                </tr>
-
-                <tr>
-                  <td className="border border-gray-400 px-4 py-2">Bags</td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.Purebags || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {weightData?.Mixingbags || 0}
-                  </td>
-                  <td className="border border-gray-400 px-4 py-2">
-                    {(weightData?.Purebags || 0) +
-                      (weightData?.Mixingbags || 0)}
-                  </td>
-                </tr>
+                  return (
+                    <tr
+                      key={row.label}
+                      className={row.highlight ? "is-highlight" : undefined}
+                    >
+                      <td className={cellClass}>{row.label}</td>
+                      <td className={`${cellClass} is-num`}>{fmt(pure)}</td>
+                      {varieties.map((variety: any) => (
+                        <td
+                          key={variety.key}
+                          className={`${cellClass} is-num is-variety`}
+                        >
+                          {fmt(variety[row.varietyKey])}
+                        </td>
+                      ))}
+                      <td className={`${cellClass} is-num`}>{fmt(mixing)}</td>
+                      <td className={`${cellClass} is-num is-total`}>
+                        {fmt(pure + mixing)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* <div className="lg:flex items-center justify-between mb-4">

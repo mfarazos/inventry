@@ -196,6 +196,24 @@ import {
     const closingPure = num(pdfWeightData?.closingWeightPure)
     const closingMixing = num(pdfWeightData?.closingWeightMixing)
 
+    // per-variety breakdown — mixing column ka detail
+    const pdfVarieties: any[] = Array.isArray(pdfWeightData?.varieties)
+      ? pdfWeightData.varieties.filter(
+          (variety: any) => variety?.key !== 'mixingOther',
+        )
+      : []
+
+    const varietyHeaders = pdfVarieties
+      .map((variety: any) => `<th>${variety.label}</th>`)
+      .join('')
+
+    const varietyCells = (field: string) =>
+      pdfVarieties
+        .map((variety: any) => `<td>${num(variety[field]).toFixed(2)}</td>`)
+        .join('')
+
+    const varietyEmptyCells = pdfVarieties.map(() => '<td>-</td>').join('')
+
     const recordsRows = allRecords.map((record: any) => `
       <tr class="${record.type === 'purchase' ? 'purchase-row' : 'sale-row'}">
         <td>${formatDate(record.date)}</td>
@@ -232,6 +250,7 @@ import {
               <tr>
                 <th>stock purchase</th>
                 <th>Pure</th>
+                ${varietyHeaders}
                 <th>Mixing</th>
                 <th>Total</th>
               </tr>
@@ -240,36 +259,42 @@ import {
               <tr>
                 <td>Opening balance</td>
                 <td>${openingPure.toFixed(2)}</td>
+                ${varietyCells('openingBalance')}
                 <td>${openingMixing.toFixed(2)}</td>
                 <td>${(openingPure + openingMixing).toFixed(2)}</td>
               </tr>
               <tr>
                 <td>Total dana received by party</td>
                 <td>${receivedPure.toFixed(2)}</td>
+                ${varietyCells('purchase')}
                 <td>${receivedMixing.toFixed(2)}</td>
                 <td>${(receivedPure + receivedMixing).toFixed(2)}</td>
               </tr>
               <tr>
                 <td>Total dana received + opening balance</td>
                 <td>${receivedOpeningPure.toFixed(2)}</td>
+                ${varietyCells('totalPurchase')}
                 <td>${receivedOpeningMixing.toFixed(2)}</td>
                 <td>${(receivedOpeningPure + receivedOpeningMixing).toFixed(2)}</td>
               </tr>
               <tr>
                 <td>Total dana consumption</td>
                 <td>${consumptionPure.toFixed(2)}</td>
+                ${varietyCells('sale')}
                 <td>${consumptionMixing.toFixed(2)}</td>
                 <td>${(consumptionPure + consumptionMixing).toFixed(2)}</td>
               </tr>
               <tr>
                 <td>Closing Balance</td>
                 <td>${closingPure.toFixed(2)}</td>
+                ${varietyCells('closing')}
                 <td>${closingMixing.toFixed(2)}</td>
                 <td>${(closingPure + closingMixing).toFixed(2)}</td>
               </tr>
               <tr>
                 <td>Bags</td>
                 <td>-</td>
+                ${varietyEmptyCells}
                 <td>-</td>
                 <td>${totalBags}</td>
               </tr>
