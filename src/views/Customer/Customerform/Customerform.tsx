@@ -5,6 +5,11 @@ import hooks from "@/components/ui/hooks";
 import StickyFooter from "@/components/shared/StickyFooter";
 import { Form, Formik, FormikProps } from "formik";
 import BasicInformationFields from "./BasicInformationField";
+import {
+  MIXING_VARIETIES,
+  emptyMixingVarietyValues,
+  selectedVarietiesFromData,
+} from "./mixingVarieties";
 import cloneDeep from "lodash/cloneDeep";
 import { AiOutlineSave } from "react-icons/ai";
 import * as Yup from "yup";
@@ -105,6 +110,7 @@ const CustomerForm = forwardRef<FormikRef, clientForm>((props, ref) => {
       phoneNumber: '',
       ratio: '',
       description: '',
+      ...emptyMixingVarietyValues(),
     },
     onFormSubmit,
     onDiscard,
@@ -123,10 +129,33 @@ const CustomerForm = forwardRef<FormikRef, clientForm>((props, ref) => {
       
       <Formik
         innerRef={ref}
-        initialValues={cloneDeep(initialData)}
+        initialValues={{
+          ...emptyMixingVarietyValues(),
+          ...cloneDeep(initialData),
+          selectedVarieties: selectedVarietiesFromData(initialData),
+        }}
         validationSchema={validationSchema}
         onSubmit={async (values: FormModel, { setSubmitting }) => {
-          const formData = cloneDeep(values);
+          const formData: any = cloneDeep(values);
+
+          const selectedVarieties: string[] = formData.selectedVarieties || [];
+          delete formData.selectedVarieties;
+
+          if (selectedVarieties.length) {
+            // backend weightMixing khud varieties ke total se banata hai
+            delete formData.weightMixing;
+            // sirf jo varieties tick hui hain wahi bhejni hain
+            MIXING_VARIETIES.forEach((variety) => {
+              if (selectedVarieties.includes(variety.key)) return;
+              delete formData[variety.weightField];
+            });
+          } else {
+            // purana tareeqa: sirf weightMixing, koi variety nahi
+            MIXING_VARIETIES.forEach((variety) => {
+              delete formData[variety.weightField];
+            });
+          }
+
           // navigate("/game");
           try {
             

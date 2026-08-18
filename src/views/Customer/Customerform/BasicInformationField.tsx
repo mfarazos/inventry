@@ -6,6 +6,10 @@ import { FormItem } from "@/components/ui/Form";
 import { Field, FormikErrors, FormikTouched, useFormikContext } from "formik";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import {
+  MIXING_VARIETIES,
+  toNumber,
+} from "./mixingVarieties";
 
 type FormFieldsName = {
   date: Date;
@@ -29,6 +33,9 @@ type FormFieldsName = {
   ratio: string;
   additionalRate: boolean;
   description: string;
+  selectedVarieties: string[];
+  // mixing variety weights, see MIXING_VARIETIES
+  [key: string]: any;
 };
 
 
@@ -55,12 +62,42 @@ const suggestionBoxRef = useRef<HTMLDivElement | null>(null);
 
 const API_BASE_URL = appConfig.apiPrefix;
 
+  const selectedVarieties: string[] = values.selectedVarieties || [];
+  const activeVarieties = MIXING_VARIETIES.filter((variety) =>
+    selectedVarieties.includes(variety.key)
+  );
+  const usingVarieties = activeVarieties.length > 0;
+
+  // selected varieties ka total — user khud add nahi karta
+  const mixWeight = activeVarieties.reduce(
+    (sum, variety) => sum + toNumber(values[variety.weightField]),
+    0
+  );
+
   // Local state to manage date values
   useEffect(() => {
-    let totalWeight = values.weightPure + values.weightMixing;
+    setFieldValue("weightMixing", mixWeight);
+
+    let totalWeight = toNumber(values.weightPure) + mixWeight;
     setFieldValue("grossWeight", totalWeight  );
    
-  }, [values.weightPure, values.weightMixing]);
+  }, [values.weightPure, mixWeight]);
+
+  const toggleVariety = (key: string, checked: boolean) => {
+    const variety = MIXING_VARIETIES.find((item) => item.key === key);
+    if (!variety) return;
+
+    if (checked) {
+      setFieldValue("selectedVarieties", [...selectedVarieties, key]);
+    } else {
+      setFieldValue(
+        "selectedVarieties",
+        selectedVarieties.filter((item) => item !== key)
+      );
+      // clear the hidden value so an unchecked variety never counts
+      setFieldValue(variety.weightField, 0);
+    }
+  };
 
   useEffect(() => {
     const searchValue = values.clientName?.trim();
@@ -324,10 +361,64 @@ const API_BASE_URL = appConfig.apiPrefix;
             autoComplete="off"
             name="weightMixing"
             placeholder="Enter mix Weight"
-            component={Input} />
+            component={Input}
+            readOnly />
         </FormItem>
       </div>
       </div>
+
+      <div className="mb-4">
+        <FormItem label="Mixing Varieties">
+          <div className="flex flex-wrap gap-3">
+            {MIXING_VARIETIES.map((variety) => (
+              <label
+                key={variety.key}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px',
+                  border: '1px solid #ccc',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  backgroundColor: 'white',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedVarieties.includes(variety.key)}
+                  onChange={(e) => toggleVariety(variety.key, e.target.checked)}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    cursor: 'pointer',
+                    accentColor: '#007bff',
+                  }}
+                />
+                <span>{variety.label}</span>
+              </label>
+            ))}
+          </div>
+        </FormItem>
+      </div>
+
+      {usingVarieties && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {activeVarieties.map((variety) => (
+            <div className="col-span-1" key={variety.key}>
+              <FormItem label={`${variety.label} Weight`}>
+                <Field
+                  type="number"
+                  autoComplete="off"
+                  name={variety.weightField}
+                  placeholder={`Enter ${variety.label} weight`}
+                  component={Input}
+                />
+              </FormItem>
+            </div>
+          ))}
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="col-span-1">

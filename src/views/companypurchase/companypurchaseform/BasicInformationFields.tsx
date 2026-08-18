@@ -7,6 +7,11 @@ import { Field,FieldProps, FormikErrors, FormikTouched, useFormikContext } from 
 import DatePicker from 'react-datepicker';
 import { format } from 'date-fns';
 import 'react-datepicker/dist/react-datepicker.css';
+import {
+  MIXING_VARIETIES,
+  PURE_BAG_WEIGHT,
+  toNumber,
+} from "./mixingVarieties";
 
 
 
@@ -27,7 +32,10 @@ type FormFieldsName = {
   userType: string;
   phoneNumber: string;
   rate: number;
-  isNorani: boolean
+  isNorani: boolean;
+  selectedVarieties: string[];
+  // mixing variety bags / per bag weights, see MIXING_VARIETIES
+  [key: string]: any;
 };
 
 type BasicInformationFieldsProps = {
@@ -44,15 +52,54 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
   const { touched, errors,userName,  userId, userType , phoneNumber } = props;
   const { values, setFieldValue, handleChange, } = useFormikContext<FormFieldsName>();
 
+  const selectedVarieties: string[] = values.selectedVarieties || [];
+  const activeVarieties = MIXING_VARIETIES.filter((variety) =>
+    selectedVarieties.includes(variety.key)
+  );
+
+  const varietyBags = activeVarieties.reduce(
+    (sum, variety) => sum + toNumber(values[variety.bagsField]),
+    0
+  );
+  const varietyWeight = activeVarieties.reduce(
+    (sum, variety) =>
+      sum + toNumber(values[variety.bagsField]) * toNumber(values[variety.weightField]),
+    0
+  );
+
+  // purana mixing + saari selected varieties ka total — sirf dikhane ke liye,
+  // backend weightMixing khud calculate karta hai
+  const mixWeight =
+    toNumber(values.mixingBags) * toNumber(values.mixingBagsWeight) + varietyWeight;
+
   useEffect(() => {
-      let totalBags = values.pureBags + values.mixingBags;
+      let totalBags = toNumber(values.pureBags) + toNumber(values.mixingBags) + varietyBags;
       setFieldValue("totalBags", totalBags  );
 
-      let total = (values.pureBags*25 + values.mixingBags*values.mixingBagsWeight);
+      setFieldValue("weightMixing", mixWeight  );
+
+      let total = (toNumber(values.pureBags)*PURE_BAG_WEIGHT + mixWeight);
 
       setFieldValue("quantity", total.toString()  );
      
-    }, [values.pureBags, values.mixingBags,values.mixingBagsWeight]);
+    }, [values.pureBags, values.mixingBags,values.mixingBagsWeight, varietyBags, mixWeight]);
+
+  const toggleVariety = (key: string, checked: boolean) => {
+    const variety = MIXING_VARIETIES.find((item) => item.key === key);
+    if (!variety) return;
+
+    if (checked) {
+      setFieldValue("selectedVarieties", [...selectedVarieties, key]);
+    } else {
+      setFieldValue(
+        "selectedVarieties",
+        selectedVarieties.filter((item) => item !== key)
+      );
+      // clear the hidden values so an unchecked variety never counts
+      setFieldValue(variety.bagsField, 0);
+      setFieldValue(variety.weightField, 0);
+    }
+  };
 
     
 
@@ -135,6 +182,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
         />
       </FormItem>
       </div>
+      {/* Mix bags field filhaal hide hai — mixing varieties use ho rahi hain
       <div className="col-span-1">
       <FormItem
        label="Mix bags"
@@ -150,10 +198,12 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
        />
       </FormItem>
       </div>
+      */}
       
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {/* Mix bags Weight field filhaal hide hai — mixing varieties use ho rahi hain
     <div className="col-span-1">
       <FormItem
          label="Mix bags Weight"
@@ -170,6 +220,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
          />
       </FormItem>
       </div>
+      */}
       <div className="col-span-1">
       <FormItem
        label="Bill Number"
@@ -188,6 +239,86 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
       </div>
 
    
+    <div className="mb-4">
+      <FormItem label="Mixing Varieties">
+        <div className="flex flex-wrap gap-3">
+          {MIXING_VARIETIES.map((variety) => (
+            <label
+              key={variety.key}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px',
+                border: '1px solid #ccc',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                backgroundColor: 'white',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={selectedVarieties.includes(variety.key)}
+                onChange={(e) => toggleVariety(variety.key, e.target.checked)}
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  cursor: 'pointer',
+                  accentColor: '#007bff',
+                }}
+              />
+              <span>{variety.label}</span>
+            </label>
+          ))}
+        </div>
+      </FormItem>
+    </div>
+
+    {activeVarieties.length > 0 && (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {activeVarieties.map((variety) => (
+          <React.Fragment key={variety.key}>
+            <div className="col-span-1">
+              <FormItem label={`${variety.label} Bags`}>
+                <Field
+                  type="number"
+                  autoComplete="off"
+                  name={variety.bagsField}
+                  placeholder="Enter a bag"
+                  component={Input}
+                />
+              </FormItem>
+            </div>
+            <div className="col-span-1">
+              <FormItem label={`${variety.label} Bags Weight`}>
+                <Field
+                  type="number"
+                  autoComplete="off"
+                  name={variety.weightField}
+                  placeholder="enter a weight"
+                  component={Input}
+                />
+              </FormItem>
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+    )}
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="col-span-1">
+        <FormItem label="Mix Weight">
+          <Field
+            type="number"
+            autoComplete="off"
+            name="weightMixing"
+            component={Input}
+            readOnly
+          />
+        </FormItem>
+      </div>
+    </div>
+
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div className="col-span-1">
       <FormItem

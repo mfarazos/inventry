@@ -6,6 +6,11 @@ import StickyFooter from "@/components/shared/StickyFooter";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { Form, Formik, FormikProps } from "formik";
 import BasicInformationFields from "./BasicInformationFields";
+import {
+  MIXING_VARIETIES,
+  emptyMixingVarietyValues,
+  selectedVarietiesFromData,
+} from "./mixingVarieties";
 import cloneDeep from "lodash/cloneDeep";
 import { HiOutlinePlus, HiOutlineTrash } from "react-icons/hi";
 import { AiOutlineSave } from "react-icons/ai";
@@ -87,6 +92,7 @@ const Companypurchaseform = forwardRef<FormikRef, Companypurchaseform>((props, r
       receivedFrom: "",
       product: "",
       isNorani: false,
+      ...emptyMixingVarietyValues(),
       userId: userId || null,
       userType: userType || 'walkingCustomer',
       userName: userName || null,
@@ -110,11 +116,28 @@ const Companypurchaseform = forwardRef<FormikRef, Companypurchaseform>((props, r
       <Formik
         innerRef={ref}
         initialValues={{
+          ...emptyMixingVarietyValues(),
           ...initialData,
+          selectedVarieties: selectedVarietiesFromData(initialData),
         }}
         validationSchema={validationSchema}
         onSubmit={async (values: FormModel, { setSubmitting }) => {
-          const formData = cloneDeep(values);
+          const formData: any = cloneDeep(values);
+
+          const selectedVarieties: string[] = formData.selectedVarieties || [];
+          delete formData.selectedVarieties;
+
+          // backend derives these from the bags, sending them would double count
+          delete formData.weightMixing;
+          delete formData.grossWeight;
+
+          // only send the varieties the user ticked
+          MIXING_VARIETIES.forEach((variety) => {
+            if (selectedVarieties.includes(variety.key)) return;
+            delete formData[variety.bagsField];
+            delete formData[variety.weightField];
+            delete formData[variety.weightTotalField];
+          });
 
           try {
             
