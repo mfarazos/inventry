@@ -628,6 +628,20 @@ import {
       );
     };
   
+    // sale side variety weights — product ke hisaab se order
+    const saleVarietyColumns =
+      productType === "hydensity"
+        ? [
+            { header: "Calpet", field: "weightCalpet" },
+            { header: "Recycle LLD", field: "weightRecycleLLD" },
+            { header: "Masterbatch", field: "weightmasterbatch" },
+          ]
+        : [
+            { header: "Lotterene", field: "weightlotterene" },
+            { header: "Recycle LLD", field: "weightRecycleLLD" },
+            { header: "Masterbatch", field: "weightmasterbatch" },
+          ];
+
     // columns
 const columns: ColumnDef<StoreItem>[] = useMemo(
   () => [
@@ -735,6 +749,22 @@ const columns: ColumnDef<StoreItem>[] = useMemo(
         return type === "sale" ? <span>{ratio}</span> : <span>-</span>;
       },
     },
+    {
+      header: "Pure Weight",
+      cell: (props) => {
+        const { weightPure, type } = props.row.original as any;
+        return type === "sale" ? <span>{Number(weightPure) || 0} kg</span> : <span>-</span>;
+      },
+    },
+    ...saleVarietyColumns.map((variety) => ({
+      header: variety.header,
+      id: variety.field,
+      cell: (props: any) => {
+        const row = props.row.original as any;
+        const weight = Number(row[variety.field]) || 0;
+        return row.type === "sale" && weight > 0 ? <span>{weight} kg</span> : <span>-</span>;
+      },
+    })),
     {
       header: "Gross Weight",
       cell: (props) => {
