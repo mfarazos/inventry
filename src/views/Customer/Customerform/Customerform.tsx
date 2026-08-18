@@ -154,6 +154,7 @@ const CustomerForm = forwardRef<FormikRef, clientForm>((props, ref) => {
             MIXING_VARIETIES.forEach((variety) => {
               delete formData[variety.weightField];
             });
+            
           }
 
           // navigate("/game");
