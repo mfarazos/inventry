@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StoreItem } from "@/@types/store";
 import useListApi from "@/utils/hooks/useListApi";
 import HeaderContent from "@/components/shared/HeaderContent";
+import { summaryVarietyKeys } from "@/configs/mixingVarieties.config";
 import ApiService from "@/services/ApiService";
 import {
   deleteCustomers,
@@ -284,6 +285,30 @@ export default function CustomerList() {
   `
           : '<tr><td colspan="9" class="center">No data available for this period.</td></tr>';
 
+      // mixing column ki variety-wise breakdown (bill screen par product select nahi
+      // hota, is liye saari varieties aati hain)
+      const weightVarieties = (weightData as any)?.varieties;
+
+      const billVarieties = summaryVarietyKeys(productType)
+        .map((key) =>
+          (Array.isArray(weightVarieties) ? weightVarieties : []).find(
+            (variety: any) => variety?.key === key,
+          ),
+        )
+        .filter(Boolean) as any[];
+
+      const varietyHeadersHtml = billVarieties
+        .map((variety: any) => `<th>${variety.label}</th>`)
+        .join("");
+
+      const varietyCellsHtml = (field: string) =>
+        billVarieties
+          .map(
+            (variety: any) =>
+              `<td class="right">${Number(variety?.[field] || 0).toFixed(2)}</td>`,
+          )
+          .join("");
+
       const stockPurchasesTableHtml =
         userType !== "walkingCustomer" && weightData
           ? `
@@ -294,7 +319,7 @@ export default function CustomerList() {
           
             <thead>
               <tr>
-                <th>stock purchase</th><th>Pure</th><th>Mixing</th><th>Total</th>
+                <th>stock purchase</th><th>Pure</th>${varietyHeadersHtml}<th>Mixing</th><th>Total</th>
               </tr>
             </thead>
             <tbody>
@@ -303,37 +328,43 @@ export default function CustomerList() {
                   "Opening balance",
                   weightData?.openingBalanceWeightPure,
                   weightData?.openingBalanceWeightMixing,
+                  "openingBalance",
                 ],
                 [
                   "Total dana received by party",
                   weightData?.purchaseWeightPure,
                   weightData?.purchaseWeightMixing,
+                  "purchase",
                 ],
                 [
                   "Total dana received + opening balance",
                   weightData?.totalPurchaseWeightPure,
                   weightData.totalPurchaseWeightMixing,
+                  "totalPurchase",
                 ],
                 [
                   "Total dana consumption",
                   weightData?.saleWeightPure,
                   weightData?.saleWeightMixing,
+                  "sale",
                 ],
                 [
                   "Closing Balance",
                   weightData?.closingWeightPure,
                   weightData?.closingWeightMixing,
+                  "closing",
                 ],
               ]
                 .map(
-                  ([label, pure, mix]) => `
+                  ([label, pure, mix, varietyField]) => `
                 <tr>
                   <td>${label}</td>
                   <td class="right">${Number(pure || 0).toFixed(2)}</td>
+                  ${varietyCellsHtml(varietyField as string)}
                   <td class="right">${Number(mix || 0).toFixed(2)}</td>
-                  <td class="right">${Number((pure || 0) + (mix || 0)).toFixed(
-                    2,
-                  )}</td>
+                  <td class="right">${Number(
+                    (pure as number || 0) + (mix as number || 0),
+                  ).toFixed(2)}</td>
                 </tr>
               `,
                 )

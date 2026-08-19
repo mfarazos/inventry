@@ -5,6 +5,7 @@ import Input from "@/components/ui/Input";
 import { Link, useNavigate } from "react-router-dom";
 
 import { ChangeEvent } from "react";
+import { summaryVarietyKeys } from "@/configs/mixingVarieties.config";
 
 type HeaderContentProps = {
   text: string | JSX.Element;
@@ -82,10 +83,16 @@ const HeaderContent = (props: HeaderContentProps) => {
 
   // backend har variety ka apna weight bhejta hai — mixing column unka total hai,
   // ye columns us total ki breakdown dikhate hain
-  // mixingOther ("Mixing (baqi)") filhaal show nahi karna
-  const varieties: any[] = Array.isArray(weightData?.varieties)
-    ? weightData.varieties.filter((variety: any) => variety?.key !== "mixingOther")
-    : [];
+  // product select hone par sirf usi ki varieties (client rules), warna saari
+  const allowedVarietyKeys = summaryVarietyKeys(dropDownSelectedValue);
+
+  const varieties: any[] = allowedVarietyKeys
+    .map((key) =>
+      (Array.isArray(weightData?.varieties) ? weightData.varieties : []).find(
+        (variety: any) => variety?.key === key,
+      ),
+    )
+    .filter(Boolean);
 
   const summaryRows = [
     {
@@ -233,7 +240,7 @@ const HeaderContent = (props: HeaderContentProps) => {
           <div className="inventory-summary-card">
             <div className="inventory-summary-head">
               <h2>Summary</h2>
-              <span>Mixing column ki breakdown — har variety ka apna weight</span>
+              
             </div>
             <div className="inventory-summary-scroll">
             <table className="inventory-report-table">

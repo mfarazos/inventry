@@ -29,6 +29,7 @@ import {
   } from "@/services/GameManagement";
   import CustomConfirmDialog from "@/components/shared/CustomConfirmDialog";
   import { storeItemTypesOptions } from "@/configs/dropdown.config";
+  import { varietyColumnsForProduct, varietyKeysForProduct } from "@/configs/mixingVarieties.config";
   import { Avatar, Dialog } from "@/components/ui";
   import { FaLock, FaLockOpen, FaUnlockAlt } from "react-icons/fa";
   import Swal from "sweetalert2";
@@ -197,11 +198,13 @@ import {
     const closingMixing = num(pdfWeightData?.closingWeightMixing)
 
     // per-variety breakdown — mixing column ka detail
-    const pdfVarieties: any[] = Array.isArray(pdfWeightData?.varieties)
-      ? pdfWeightData.varieties.filter(
-          (variety: any) => variety?.key !== 'mixingOther',
-        )
+    const allVarieties: any[] = Array.isArray(pdfWeightData?.varieties)
+      ? pdfWeightData.varieties
       : []
+
+    const pdfVarieties: any[] = varietyKeysForProduct(productType)
+      .map((key) => allVarieties.find((variety: any) => variety?.key === key))
+      .filter(Boolean)
 
     const varietyHeaders = pdfVarieties
       .map((variety: any) => `<th>${variety.label}</th>`)
@@ -653,19 +656,8 @@ import {
       );
     };
   
-    // sale side variety weights — product ke hisaab se order
-    const saleVarietyColumns =
-      productType === "hydensity"
-        ? [
-            { header: "Calpet", field: "weightCalpet" },
-            { header: "Recycle LLD", field: "weightRecycleLLD" },
-            { header: "Masterbatch", field: "weightmasterbatch" },
-          ]
-        : [
-            { header: "Lotterene", field: "weightlotterene" },
-            { header: "Recycle LLD", field: "weightRecycleLLD" },
-            { header: "Masterbatch", field: "weightmasterbatch" },
-          ];
+    // sale side variety weights — sirf selected product ki varieties
+    const saleVarietyColumns = varietyColumnsForProduct(productType);
 
     // columns
 const columns: ColumnDef<StoreItem>[] = useMemo(
