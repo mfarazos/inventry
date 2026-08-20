@@ -5,7 +5,10 @@ import Input from "@/components/ui/Input";
 import { Link, useNavigate } from "react-router-dom";
 
 import { ChangeEvent } from "react";
-import { summaryVarietyKeys } from "@/configs/mixingVarieties.config";
+import {
+  SHOW_MIXING_COLUMN,
+  summaryVarietyKeys,
+} from "@/configs/mixingVarieties.config";
 
 type HeaderContentProps = {
   text: string | JSX.Element;
@@ -256,7 +259,9 @@ const HeaderContent = (props: HeaderContentProps) => {
                       {variety.label}
                     </th>
                   ))}
-                  <th className={`${cellClass} is-num`}>mixing</th>
+                  {SHOW_MIXING_COLUMN && (
+                    <th className={`${cellClass} is-num`}>mixing</th>
+                  )}
                   <th className={`${cellClass} is-num is-total`}>Total</th>
                 </tr>
               </thead>
@@ -280,7 +285,9 @@ const HeaderContent = (props: HeaderContentProps) => {
                           {fmt(variety[row.varietyKey])}
                         </td>
                       ))}
-                      <td className={`${cellClass} is-num`}>{fmt(mixing)}</td>
+                      {SHOW_MIXING_COLUMN && (
+                        <td className={`${cellClass} is-num`}>{fmt(mixing)}</td>
+                      )}
                       <td className={`${cellClass} is-num is-total`}>
                         {fmt(pure + mixing)}
                       </td>

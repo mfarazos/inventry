@@ -6,6 +6,10 @@
  *
  * Keys backend ke sale-side field names hain (case sensitive).
  */
+/* Client ki requirement par summary se "mixing" (total) column filhaal hidden hai.
+   Wapas chahiye to sirf ye true kar dein — Total pehle se pure + mixing hi hai. */
+export const SHOW_MIXING_COLUMN = false;
+
 export const VARIETY_LABELS: Record<string, string> = {
   weightmasterbatch: "Masterbatch",
   weightlotterene: "Lotterene",

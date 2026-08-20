@@ -29,7 +29,7 @@ import {
   } from "@/services/GameManagement";
   import CustomConfirmDialog from "@/components/shared/CustomConfirmDialog";
   import { storeItemTypesOptions } from "@/configs/dropdown.config";
-  import { varietyColumnsForProduct, varietyKeysForProduct } from "@/configs/mixingVarieties.config";
+  import { SHOW_MIXING_COLUMN, varietyColumnsForProduct, varietyKeysForProduct } from "@/configs/mixingVarieties.config";
   import { Avatar, Dialog } from "@/components/ui";
   import { FaLock, FaLockOpen, FaUnlockAlt } from "react-icons/fa";
   import Swal from "sweetalert2";
@@ -217,6 +217,12 @@ import {
 
     const varietyEmptyCells = pdfVarieties.map(() => '<td>-</td>').join('')
 
+    // client ki requirement par mixing column filhaal hidden hai
+    const mixingHeader = SHOW_MIXING_COLUMN ? '<th>Mixing</th>' : ''
+    const mixingCell = (value: number) =>
+      SHOW_MIXING_COLUMN ? `<td>${value.toFixed(2)}</td>` : ''
+    const mixingEmptyCell = SHOW_MIXING_COLUMN ? '<td>-</td>' : ''
+
     const recordsRows = allRecords.map((record: any) => `
       <tr class="${record.type === 'purchase' ? 'purchase-row' : 'sale-row'}">
         <td>${formatDate(record.date)}</td>
@@ -254,7 +260,7 @@ import {
                 <th>stock purchase</th>
                 <th>Pure</th>
                 ${varietyHeaders}
-                <th>Mixing</th>
+                ${mixingHeader}
                 <th>Total</th>
               </tr>
             </thead>
@@ -263,42 +269,42 @@ import {
                 <td>Opening balance</td>
                 <td>${openingPure.toFixed(2)}</td>
                 ${varietyCells('openingBalance')}
-                <td>${openingMixing.toFixed(2)}</td>
+                ${mixingCell(openingMixing)}
                 <td>${(openingPure + openingMixing).toFixed(2)}</td>
               </tr>
               <tr>
                 <td>Total dana received by party</td>
                 <td>${receivedPure.toFixed(2)}</td>
                 ${varietyCells('purchase')}
-                <td>${receivedMixing.toFixed(2)}</td>
+                ${mixingCell(receivedMixing)}
                 <td>${(receivedPure + receivedMixing).toFixed(2)}</td>
               </tr>
               <tr>
                 <td>Total dana received + opening balance</td>
                 <td>${receivedOpeningPure.toFixed(2)}</td>
                 ${varietyCells('totalPurchase')}
-                <td>${receivedOpeningMixing.toFixed(2)}</td>
+                ${mixingCell(receivedOpeningMixing)}
                 <td>${(receivedOpeningPure + receivedOpeningMixing).toFixed(2)}</td>
               </tr>
               <tr>
                 <td>Total dana consumption</td>
                 <td>${consumptionPure.toFixed(2)}</td>
                 ${varietyCells('sale')}
-                <td>${consumptionMixing.toFixed(2)}</td>
+                ${mixingCell(consumptionMixing)}
                 <td>${(consumptionPure + consumptionMixing).toFixed(2)}</td>
               </tr>
               <tr>
                 <td>Closing Balance</td>
                 <td>${closingPure.toFixed(2)}</td>
                 ${varietyCells('closing')}
-                <td>${closingMixing.toFixed(2)}</td>
+                ${mixingCell(closingMixing)}
                 <td>${(closingPure + closingMixing).toFixed(2)}</td>
               </tr>
               <tr>
                 <td>Bags</td>
                 <td>-</td>
                 ${varietyEmptyCells}
-                <td>-</td>
+                ${mixingEmptyCell}
                 <td>${totalBags}</td>
               </tr>
             </tbody>
