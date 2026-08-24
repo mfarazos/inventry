@@ -60,7 +60,14 @@ const validationSchema = Yup.object().shape({
   //   .required("Date is required."),
     
   quality: Yup.string().required("Quality details are required."),
-  quantity: Yup.string().required("Quantity is required."),
+  quantity: Yup.number()
+    .min(0, "Quantity cannot be negative.")
+    .required("Quantity is required."),
+  pureBags: Yup.number().min(0, "Pure bags cannot be negative."),
+  mixingBags: Yup.number().min(0, "Mix bags cannot be negative."),
+  mixingBagsWeight: Yup.number().min(0, "Mix bags weight cannot be negative."),
+  totalBags: Yup.number().min(0, "Total bags cannot be negative."),
+  rate: Yup.number().min(0, "Rate cannot be negative."),
   
   billNo: Yup.string().required("Bill number is required."),
   receivedFrom: Yup.string().required("Received From is required."),
@@ -90,6 +97,7 @@ const Companypurchaseform = forwardRef<FormikRef, Companypurchaseform>((props, r
       grossWeight: 0,
       billNo: "",
       receivedFrom: "",
+      vendorRef: "",
       product: "",
       isNorani: false,
       ...emptyMixingVarietyValues(),

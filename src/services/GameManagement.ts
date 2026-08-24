@@ -34,6 +34,10 @@ export function getwalkingCustomers() {
   return "/inventoryApp/getwalkingcustomer";
 }
 
+export function getReceivedFromVendorRef() {
+  return "/inventoryApp/getReceivedFromVendorRef";
+}
+
 export function getCustomerdetails() {
   return "/inventoryApp/getCustomerdetails";
 }

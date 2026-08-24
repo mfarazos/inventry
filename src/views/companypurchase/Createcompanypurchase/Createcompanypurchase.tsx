@@ -22,6 +22,10 @@ import Companypurchaseform, {
       data.userId = userId || null;
       data.userName =  userName || null
 
+      if (data.userType !== "walkingCustomer") {
+        delete (data as any).vendorRef;
+      }
+
       const response = await createGameMode<FormModel>(data);
       console.log("RESPONSE", response.data);
       return response.data;

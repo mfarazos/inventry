@@ -1,8 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import AdaptableCard from "@/components/shared/AdaptableCard";
 import Input from "@/components/ui/Input";
 import { FormItem } from "@/components/ui/Form";
 import { Field,FieldProps, FormikErrors, FormikTouched, useFormikContext } from "formik";
+import ApiService from "@/services/ApiService";
+import { getReceivedFromVendorRef } from "@/services/GameManagement";
 
 import DatePicker from 'react-datepicker';
 import { format } from 'date-fns';
@@ -26,6 +28,7 @@ type FormFieldsName = {
   mixingBagsWeight: number;
   billNo: string;
   receivedFrom: string;
+  vendorRef: string;
   product: string;
   userName : string;
   userId: string; 
@@ -51,38 +54,122 @@ type BasicInformationFieldsProps = {
 const BasicInformationFields = (props: BasicInformationFieldsProps) => {
   const { touched, errors,userName,  userId, userType , phoneNumber } = props;
   const { values, setFieldValue, handleChange, } = useFormikContext<FormFieldsName>();
+  const [vendorSearch, setVendorSearch] = useState("");
+  const [debouncedVendorSearch, setDebouncedVendorSearch] = useState("");
+  const [vendorOptions, setVendorOptions] = useState<
+    Array<{ receivedFrom?: string; vendorRef?: string }>
+  >([]);
+  const [vendorLoading, setVendorLoading] = useState(false);
+  const [showVendorSuggestions, setShowVendorSuggestions] = useState(false);
 
   const selectedVarieties: string[] = values.selectedVarieties || [];
   const activeVarieties = MIXING_VARIETIES.filter((variety) =>
     selectedVarieties.includes(variety.key)
   );
+  const nonNegativeValue = (value: any) => Math.max(toNumber(value), 0);
 
   const varietyBags = activeVarieties.reduce(
-    (sum, variety) => sum + toNumber(values[variety.bagsField]),
+    (sum, variety) => sum + nonNegativeValue(values[variety.bagsField]),
     0
   );
   const varietyWeight = activeVarieties.reduce(
     (sum, variety) =>
-      sum + toNumber(values[variety.bagsField]) * toNumber(values[variety.weightField]),
+      sum +
+      nonNegativeValue(values[variety.bagsField]) *
+        nonNegativeValue(values[variety.weightField]),
     0
   );
 
   // purana mixing + saari selected varieties ka total — sirf dikhane ke liye,
   // backend weightMixing khud calculate karta hai
   const mixWeight =
-    toNumber(values.mixingBags) * toNumber(values.mixingBagsWeight) + varietyWeight;
+    nonNegativeValue(values.mixingBags) *
+      nonNegativeValue(values.mixingBagsWeight) +
+    varietyWeight;
 
   useEffect(() => {
-      let totalBags = toNumber(values.pureBags) + toNumber(values.mixingBags) + varietyBags;
+    const timer = setTimeout(() => {
+      setDebouncedVendorSearch(vendorSearch.trim());
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [vendorSearch]);
+
+  useEffect(() => {
+    if (!debouncedVendorSearch) {
+      setVendorOptions([]);
+      setVendorLoading(false);
+      return;
+    }
+
+    const fetchVendors = async () => {
+      setVendorLoading(true);
+
+      try {
+        const response = await ApiService.fetchData<any>({
+          url: getReceivedFromVendorRef(),
+          method: "get",
+          params: {
+            userType: "walkingCustomer",
+            search: debouncedVendorSearch,
+            page: 1,
+            limit: 100,
+          },
+        });
+
+        const rows = Array.isArray(response?.data?.data?.data)
+          ? response.data.data.data
+          : [];
+
+        setVendorOptions(rows);
+      } catch (error) {
+        setVendorOptions([]);
+      } finally {
+        setVendorLoading(false);
+      }
+    };
+
+    fetchVendors();
+  }, [debouncedVendorSearch]);
+
+  useEffect(() => {
+      let totalBags = nonNegativeValue(values.pureBags) + nonNegativeValue(values.mixingBags) + varietyBags;
       setFieldValue("totalBags", totalBags  );
 
       setFieldValue("weightMixing", mixWeight  );
 
-      let total = (toNumber(values.pureBags)*PURE_BAG_WEIGHT + mixWeight);
+      let total = (nonNegativeValue(values.pureBags)*PURE_BAG_WEIGHT + mixWeight);
 
       setFieldValue("quantity", total.toString()  );
      
     }, [values.pureBags, values.mixingBags,values.mixingBagsWeight, varietyBags, mixWeight]);
+
+  const preventNegativeNumberInput = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (["-", "e", "E"].includes(event.key)) {
+      event.preventDefault();
+    }
+  };
+
+  const handleNonNegativeChange =
+    (fieldName: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      const nextValue = event.target.value;
+
+      if (nextValue === "") {
+        setFieldValue(fieldName, "");
+        return;
+      }
+
+      setFieldValue(fieldName, Math.max(Number(nextValue) || 0, 0));
+    };
+
+  const nonNegativeNumberProps = (fieldName: string) => ({
+    min: 0,
+    step: "any",
+    onKeyDown: preventNegativeNumberInput,
+    onChange: handleNonNegativeChange(fieldName),
+  });
 
   const toggleVariety = (key: string, checked: boolean) => {
     const variety = MIXING_VARIETIES.find((item) => item.key === key);
@@ -154,13 +241,68 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
          invalid={(errors.receivedFrom&& touched.receivedFrom) as boolean}
          errorMessage={errors.receivedFrom}
        >
-         <Field
-           type="string"
-           autoComplete="off"
-           name="receivedFrom"
-           placeholder="enter person"
-           component={Input}
-         />
+         <div className="relative">
+           <Input
+             type="text"
+             autoComplete="off"
+             name="receivedFrom"
+             placeholder="enter person"
+             value={values.receivedFrom || ""}
+             onChange={(event) => {
+               const nextValue = event.target.value;
+
+               setFieldValue("receivedFrom", nextValue);
+               setFieldValue("vendorRef", "");
+               setVendorSearch(nextValue);
+               setShowVendorSuggestions(Boolean(nextValue.trim()));
+             }}
+             onFocus={() => {
+               const currentValue = String(values.receivedFrom || "").trim();
+               if (currentValue) {
+                 setVendorSearch(currentValue);
+                 setShowVendorSuggestions(true);
+               }
+             }}
+             onBlur={() => {
+               setTimeout(() => setShowVendorSuggestions(false), 200);
+             }}
+           />
+
+           {showVendorSuggestions && String(values.receivedFrom || "").trim() && (
+             <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded border border-gray-200 bg-white shadow-lg">
+               {vendorLoading ? (
+                 <div className="px-3 py-2 text-sm text-gray-500">
+                   Searching vendors...
+                 </div>
+               ) : vendorOptions.length > 0 ? (
+                 vendorOptions.map((vendor, index) => (
+                   <button
+                     key={`${vendor.receivedFrom || "vendor"}-${vendor.vendorRef || index}`}
+                     type="button"
+                     className="w-full px-3 py-2 text-left transition hover:bg-gray-100"
+                     onMouseDown={() => {
+                       setFieldValue("receivedFrom", vendor.receivedFrom || "");
+                       setFieldValue("vendorRef", vendor.vendorRef || "");
+                       setVendorSearch(vendor.receivedFrom || "");
+                       setShowVendorSuggestions(false);
+                     }}
+                   >
+                     <div className="font-medium text-gray-800">
+                       {vendor.receivedFrom || "Vendor"}
+                     </div>
+                     <div className="text-xs text-gray-500">
+                       Vendor Ref: {vendor.vendorRef || "-"}
+                     </div>
+                   </button>
+                 ))
+               ) : (
+                 <div className="px-3 py-2 text-sm text-gray-500">
+                   No vendor found
+                 </div>
+               )}
+             </div>
+           )}
+         </div>
       </FormItem>
 
       </div>
@@ -179,6 +321,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
           name="pureBags"
           placeholder="Enter a bag"
           component={Input}
+          {...nonNegativeNumberProps("pureBags")}
         />
       </FormItem>
       </div>
@@ -286,6 +429,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
                   name={variety.bagsField}
                   placeholder="Enter a bag"
                   component={Input}
+                  {...nonNegativeNumberProps(variety.bagsField)}
                 />
               </FormItem>
             </div>
@@ -297,6 +441,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
                   name={variety.weightField}
                   placeholder="enter a weight"
                   component={Input}
+                  {...nonNegativeNumberProps(variety.weightField)}
                 />
               </FormItem>
             </div>
@@ -314,6 +459,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
             name="weightMixing"
             component={Input}
             readOnly
+            min={0}
           />
         </FormItem>
       </div>
@@ -333,6 +479,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
            placeholder=""
            component={Input}
            readOnly 
+           min={0}
          />
       </FormItem>
       </div>
@@ -343,11 +490,12 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
        errorMessage={errors.quantity}
      >
        <Field
-         type="string"
+         type="number"
          autoComplete="off"
          name="quantity"
          placeholder="Enter quantity"
          component={Input}
+         {...nonNegativeNumberProps("quantity")}
        />
       </FormItem>
 
@@ -366,6 +514,7 @@ const BasicInformationFields = (props: BasicInformationFieldsProps) => {
          name="rate"
          placeholder="rate"
          component={Input}
+         {...nonNegativeNumberProps("rate")}
        />
       </FormItem>
 

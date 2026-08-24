@@ -45,6 +45,16 @@ const navigationConfig: NavigationTree[] = [
     authority: [],
     subMenu: [],
   },
+  {
+    key: "vendor-purchase",
+    path: "/vendor-purchase",
+    title: "Vendor Purchase",
+    translateKey: "vendorPurchase",
+    icon: "payemnt",
+    type: NAV_ITEM_TYPE_ITEM,
+    authority: [],
+    subMenu: [],
+  },
 
   // {
   //   key: "leaderBoard",
