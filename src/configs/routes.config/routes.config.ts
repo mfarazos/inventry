@@ -157,6 +157,13 @@ export const protectedRoutes = [
     authority: ["admin", "manager"],
   },
 
+  {
+    key: "purchase-ledger-summary",
+    path: `/purchase-ledger-summary`,
+    component: lazy(() => import("@/views/purchaseLedgerSummary")),
+    authority: ["admin", "manager"],
+  },
+
   
 
 ];

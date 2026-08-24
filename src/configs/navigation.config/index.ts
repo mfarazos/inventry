@@ -108,6 +108,16 @@ const navigationConfig: NavigationTree[] = [
     subMenu: [],
   },
   {
+    key: "purchase-ledger-summary",
+    path: "/purchase-ledger-summary",
+    title: "Purchase Ledger",
+    translateKey: "purchaseLedgerSummary",
+    icon: "payemnt",
+    type: NAV_ITEM_TYPE_ITEM,
+    authority: ["admin", "manager"],
+    subMenu: [],
+  },
+  {
     key: "extrudingAccount",
     path: "/extrudingAccount",
     title: "Extruding Account",
